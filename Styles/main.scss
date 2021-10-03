@@ -6,7 +6,7 @@ $fxl-orange: #ff6e40;
   $on-primary: $fxl-gray
 );
 
-@use "@material/icon-button";
+@use "@material/icon-button/icon-button";
 @use "@material/top-app-bar/mdc-top-app-bar";
 @use "@material/typography/mdc-typography";
 
@@ -17,7 +17,19 @@ html, body {
 }
 
 body {
+  @include icon-button.core-styles;
+  
+  display: flex;
+  flex-direction: column;
+  
+  main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+  
   footer {
     font-size: smaller;
+    text-align: center;
   }
 }

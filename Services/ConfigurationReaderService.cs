@@ -1,4 +1,7 @@
+using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using fxl.codes.kisekae.Models;
 using Microsoft.AspNetCore.Http;
@@ -9,19 +12,26 @@ namespace fxl.codes.kisekae.Services
     public class ConfigurationReaderService
     {
         private readonly ILogger<ConfigurationReaderService> _logger;
+        private readonly FileParserService _fileParser;
 
-        public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger)
+        public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger, FileParserService fileParser)
         {
             _logger = logger;
+            _fileParser = fileParser;
         }
 
-        public ConfigurationModel ReadCnf(IFormFile file)
+        public PlaysetModel ReadCnf(IFormFile file)
         {
             _logger.LogTrace($"Reading filename {file.FileName}");
+            return ParseStream(file.OpenReadStream());
+        }
 
-            var model = new ConfigurationModel("");
-
-            using var reader = new StreamReader(file.OpenReadStream());
+        public PlaysetModel ParseStream(Stream fileStream, string directory = null)
+        {
+            var model = new PlaysetModel();
+            var initialPositions = new StringBuilder();
+            
+            using var reader = new StreamReader(fileStream);
             while (!reader.EndOfStream)
             {
                 var line = reader.ReadLine();
@@ -44,10 +54,45 @@ namespace fxl.codes.kisekae.Services
                     case '#':
                         model.Cels.Add(new CelModel(line));
                         break;
+                    case '$':
+                    case ' ':
+                        initialPositions.Append(line.Replace("\\r\\n", "").Replace("\\n", ""));
+                        break;
                 }
+            }
+            
+            SetInitialPositions(model, initialPositions.ToString());
+            model.Reset();
+
+            if (string.IsNullOrEmpty(directory)) return model;
+            
+            foreach (var palette in model.Palettes)
+            {
+                _fileParser.ParsePalette(directory, palette);
             }
 
             return model;
+        }
+
+        private static void SetInitialPositions(PlaysetModel model, string positions)
+        {
+            var sets = positions.Split('$', StringSplitOptions.RemoveEmptyEntries);
+            for (var index = 0; index < sets.Length; index++)
+            {
+                var value = sets[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                model.CurrentPalettes[index] = int.Parse(value[0]);
+
+                for (var innerIndex = 1; innerIndex < value.Length; innerIndex++)
+                {
+                    if (value[innerIndex] == "*") continue;
+                    var point = value[innerIndex].Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach (var cel in model.Cels.Where(x => x.Id == innerIndex - 1))
+                    {
+                        cel.InitialPositions[index] = new Point(int.Parse(point[0]), int.Parse(point[1]));
+                    }
+                }
+            }
         }
     }
 }

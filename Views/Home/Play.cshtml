@@ -1,0 +1,10 @@
+@model PlaysetModel
+
+@{
+    ViewBag.Title = "Play";
+    Layout = "_Layout";
+}
+
+<pre>
+@Json.Serialize(Model)
+</pre>

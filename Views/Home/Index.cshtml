@@ -1,8 +1,27 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<DirectoryModel>
+
+@{
+    ViewData["Title"] = "Select";
 }
 
-<form enctype="multipart/form-data" method="post" asp-action="LoadConfiguration">
+<form enctype="multipart/form-data" method="post" asp-action="Upload">
     <input type="file" name="file">
     <input class="btn" type="submit" value="Upload">
 </form>
+
+<ul>
+    @foreach (var directory in Model)
+    {
+        <li>
+            @directory.Name
+            <ul>
+                @foreach (var config in directory.Configurations)
+                {
+                    <li>
+                        <a href="javascript:" data-directory="@directory.Name">@config.Name</a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+</ul>
