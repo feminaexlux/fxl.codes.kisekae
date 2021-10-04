@@ -17,6 +17,9 @@ export default class Main {
     init() {
         let main = document.querySelector("main")
         let directories = main.querySelector("ul")
+        
+        if (!directories) return
+        
         let links = directories.querySelectorAll("a")
         
         links.forEach(link => {
