@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Text.RegularExpressions;
 
 namespace fxl.codes.kisekae.Models
@@ -32,23 +33,6 @@ namespace fxl.codes.kisekae.Models
 
         public string FileName { get; }
         public string Comment { get; }
-        public Color[] Colors { get; set; }
-    }
-
-    public class Color
-    {
-        public Color(int red, int green, int blue, int group, int depth)
-        {
-            var multiplier = depth == 12 ? 16 : 1;
-            Red = red * multiplier;
-            Green = green * multiplier;
-            Blue = blue * multiplier;
-            Group = group;
-        }
-
-        public int Red { get; }
-        public int Green { get; }
-        public int Blue { get; }
-        public int Group { get; }
+        internal Color[] Colors { get; set; }
     }
 }

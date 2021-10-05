@@ -62,13 +62,17 @@ namespace fxl.codes.kisekae.Services
             }
             
             SetInitialPositions(model, initialPositions.ToString());
-            model.Reset();
 
             if (string.IsNullOrEmpty(directory)) return model;
             
             foreach (var palette in model.Palettes)
             {
                 _fileParser.ParsePalette(directory, palette);
+            }
+
+            foreach (var cel in model.Cels)
+            {
+                _fileParser.ParseCel(directory, cel, model.Palettes);
             }
 
             return model;

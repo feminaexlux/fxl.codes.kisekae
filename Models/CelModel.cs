@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace fxl.codes.kisekae.Models
@@ -6,6 +7,7 @@ namespace fxl.codes.kisekae.Models
     public class CelModel
     {
         public const string Regex = "#([0-9]*)[\\.]?([0-9]*?)\\s([a-zA-Z\\-0-9]*\\.[cCeElL]+)\\s[\\*]?([0-9]*)?\\s?:([0-9\\s]*);(.*)";
+        public Dictionary<int, string> ImageByPalette = new();
 
         public CelModel(string line)
         {
@@ -15,7 +17,7 @@ namespace fxl.codes.kisekae.Models
             foreach (var group in matcher.GetGroupNames())
             {
                 if (group == "0") continue;
-                
+
                 match.Groups.TryGetValue(group, out var value);
                 if (string.IsNullOrEmpty(value?.Value)) continue;
 
@@ -34,10 +36,7 @@ namespace fxl.codes.kisekae.Models
                         PaletteId = int.Parse(value.Value);
                         break;
                     case "5":
-                        foreach (var id in value.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            Sets[int.Parse(id)] = true;
-                        }
+                        foreach (var id in value.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)) Sets[int.Parse(id)] = true;
                         break;
                     case "6":
                         Comment = value.Value;
@@ -52,9 +51,6 @@ namespace fxl.codes.kisekae.Models
         public int PaletteId { get; }
         public bool[] Sets { get; } = new bool[10];
         public string Comment { get; }
-        
-        public int CurrentPaletteId { get; set; }
-        public Point[] InitialPositions { get; set; } = new Point[10];
-        public Point[] CurrentPositions { get; set; } = new Point[10];
+        public Point[] InitialPositions { get; } = new Point[10];
     }
 }
