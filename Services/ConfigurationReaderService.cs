@@ -46,7 +46,9 @@ namespace fxl.codes.kisekae.Services
                         model.Height = int.Parse(resolutionMatch.Groups[2].Value);
                         break;
                     case '[':
-                        model.BorderColorIndex = int.Parse(line.Replace("[", ""));
+                        var borderValue = line.Replace("[", "");
+                        if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
+                        model.BorderColorIndex = int.Parse(borderValue);
                         break;
                     case '%':
                         model.Palettes.Add(new PaletteModel(line));
@@ -70,7 +72,7 @@ namespace fxl.codes.kisekae.Services
                 _fileParser.ParsePalette(directory, palette);
             }
 
-            foreach (var cel in model.Cels)
+            foreach (var cel in model.Cels.Where(x => !string.IsNullOrEmpty(x.FileName)))
             {
                 _fileParser.ParseCel(directory, cel, model.Palettes);
             }

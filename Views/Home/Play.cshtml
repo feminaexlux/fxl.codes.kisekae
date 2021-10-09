@@ -5,6 +5,25 @@
     Layout = "_Layout";
 }
 
-<pre>
-@Json.Serialize(Model)
-</pre>
+<div>
+    @foreach (var palette in Model.Palettes)
+    {
+        <p>
+            @palette.Comment<br>
+            @foreach (var color in palette.Colors)
+            {
+                <span style="background-color: #@(color.ToHex())">@color</span>
+            }
+        </p>
+    }
+</div>
+
+<div>
+    @foreach (var cel in Model.Cels)
+    {
+        foreach (var (key, value) in cel.ImageByPalette)
+        {
+            <img src="data:image/gif;base64,@value" alt="@key">
+        }
+    }
+</div>

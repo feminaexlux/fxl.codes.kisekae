@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.IsolatedStorage;
@@ -9,7 +8,6 @@ using fxl.codes.kisekae.Models;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Color = System.Drawing.Color;
 
 namespace fxl.codes.kisekae.Services
 {
@@ -30,20 +28,22 @@ namespace fxl.codes.kisekae.Services
         {
             _logger.LogTrace($"Reading palette {palette.FileName} from {directory}");
             var buffer = ReadToBuffer(directory, palette.FileName);
+            if (buffer.Length == 0) return;
 
             if (buffer[..KissHeader.Length].SequenceEqual(KissHeader))
             {
                 // Verify palette mark?
-                if (buffer[4] != 16) throw new InvalidDataException("File provided is not a valid palette file");
+                if (buffer[4] != 16) _logger.LogError($"{palette.FileName} is not a valid palette file");
+
                 var colorDepth = Convert.ToInt32(buffer[5]);
                 var colorsPerGroup = BitConverter.ToInt16(buffer, 8);
                 var groups = BitConverter.ToInt16(buffer, 10);
 
-                palette.Colors = GetColors(new BitArray(buffer[32..]), colorDepth, colorsPerGroup, groups);
+                palette.Colors = GetColors(buffer[32..], colorDepth, colorsPerGroup, groups);
             }
             else
             {
-                palette.Colors = GetColors(new BitArray(buffer));
+                palette.Colors = GetColors(buffer);
             }
         }
 
@@ -51,25 +51,27 @@ namespace fxl.codes.kisekae.Services
         {
             _logger.LogTrace($"Reading cel {cel.FileName} from {directory}");
             var buffer = ReadToBuffer(directory, cel.FileName);
+            if (buffer.Length == 0) return;
 
             if (buffer[..KissHeader.Length].SequenceEqual(KissHeader))
             {
                 // Verify cel mark?
-                if (buffer[4] != 16) throw new InvalidDataException("File provided is not a valid palette file");
+                if (buffer[4] != 32) _logger.LogError($"{cel.FileName} is not a valid cel file");
+
                 var pixelBits = Convert.ToInt32(buffer[5]);
                 var width = BitConverter.ToInt16(buffer, 8);
                 var height = BitConverter.ToInt16(buffer, 10);
                 var xOffset = BitConverter.ToInt16(buffer, 12);
                 var yOffset = BitConverter.ToInt16(buffer, 14);
 
-                GetCelImages(new BitArray(buffer[32..]), palettes, width, height, pixelBits, xOffset, yOffset);
+                cel.ImageByPalette = GetCelImages(buffer[32..], palettes.ToArray(), width, height, pixelBits, xOffset, yOffset);
             }
             else
             {
                 var width = BitConverter.ToInt16(buffer, 0);
                 var height = BitConverter.ToInt16(buffer, 2);
 
-                GetCelImages(new BitArray(buffer[4..]), palettes, width, height);
+                cel.ImageByPalette = GetCelImages(buffer[4..], palettes.ToArray(), width, height);
             }
         }
 
@@ -84,56 +86,83 @@ namespace fxl.codes.kisekae.Services
             return buffer;
         }
 
-        private Color[] GetColors(BitArray bitArray, int depth = 12, int colorsPerGroup = 16, int groups = 10)
+        private Color[] GetColors(byte[] bytes, int depth = 12, int colorsPerGroup = 16, int groups = 10)
         {
-            _logger.LogTrace("Converting bit array to colors");
+            _logger.LogTrace("Converting byte array to colors");
             var colorCounter = 0;
             var colors = new Color[colorsPerGroup * groups];
-            var multiplier = depth == 12 ? 16 : 1;
-            var data = new bool[bitArray.Length];
-            bitArray.CopyTo(data, 0);
+            var chunkSize = depth == 12 ? 2 : 3;
 
-            var length = depth / 3;
-            for (var index = 0; index < colorsPerGroup * groups; index += depth)
+            for (var index = 0; index < bytes.Length; index += chunkSize)
             {
-                var greenStart = index + length;
-                var blueStart = index + length * 2;
-
-                var red = GetValue(data[index..greenStart]) * multiplier;
-                var green = GetValue(data[greenStart..blueStart]) * multiplier;
-                var blue = GetValue(data[blueStart..(index + depth)]) * multiplier;
-                colors[colorCounter] = Color.FromArgb(255, red, green, blue);
+                colors[colorCounter] = GetColor(bytes[index..(index + chunkSize)], depth);
                 colorCounter++;
             }
 
             return colors;
         }
 
-        private void GetCelImages(BitArray bitArray, IEnumerable<PaletteModel> palettes, int width, int height, int pixelBits = 4, int xOffset = 0, int yOffset = 0)
+        private static Color GetColor(IReadOnlyList<byte> bytes, int depth)
         {
-            _logger.LogTrace("Converting bit array to base64 encoded gifs per palette");
-            var data = new bool[bitArray.Length];
-            bitArray.CopyTo(data, 0);
+            if (depth != 12) return Color.FromRgb(bytes[0], bytes[1], bytes[2]);
 
-            foreach (var palette in palettes)
+            var redBlue = bytes[0];
+            var red = (redBlue >> 4) & 0x0F;
+            red += red * 16;
+
+            var blue = redBlue & 0x0F;
+            blue += blue * 16;
+
+            var zeroGreen = bytes[1];
+            var green = zeroGreen & 0x0F;
+            green += green * 16;
+
+            return Color.FromRgb(Convert.ToByte(red), Convert.ToByte(green), Convert.ToByte(blue));
+        }
+
+        private Dictionary<int, string> GetCelImages(IReadOnlyList<byte> bytes,
+                                                     IReadOnlyList<PaletteModel> palettes,
+                                                     int width,
+                                                     int height,
+                                                     int pixelBits = 4,
+                                                     int xOffset = 0,
+                                                     int yOffset = 0)
+        {
+            _logger.LogTrace("Converting byte array to base64 encoded gifs per palette");
+            var dictionary = new Dictionary<int, string>();
+            var step = (int)Math.Ceiling((double)8 / pixelBits);
+
+            for (var paletteIndex = 0; paletteIndex < palettes.Count; paletteIndex++)
             {
-                using var bitmap = new Image<Bgr24>(width, height);
-                var pixelCounter = 0;
-                
+                var palette = palettes[paletteIndex];
+                using var bitmap = new Image<Rgba32>(width, height);
+                var index = 0;
+
                 for (var row = 0; row < height; row++)
                 {
                     var span = bitmap.GetPixelRowSpan(row);
+                    for (var column = 0; column < width; column += step)
+                    {
+                        var pixelByte = bytes[index];
+                        var nib1 = (pixelByte >> 4) & 0x0F;
+                        span[column] = nib1 == 0 ? Color.Black.WithAlpha(0) : palette.Colors[nib1];
+
+                        if (column + 1 < width)
+                        {
+                            var nib2 = pixelByte & 0x0F;
+                            span[column + 1] = nib2 == 0 ? Color.Black.WithAlpha(0) : palette.Colors[nib2];
+                        }
+
+                        index++;
+                    }
                 }
+
+                using var memory = new MemoryStream();
+                bitmap.SaveAsGif(memory);
+                dictionary.Add(paletteIndex, Convert.ToBase64String(memory.ToArray()));
             }
-        }
 
-        private static int GetValue(bool[] data)
-        {
-            var bits = new BitArray(data);
-            var value = new int[1];
-            bits.CopyTo(value, 0);
-
-            return value[0];
+            return dictionary;
         }
     }
 }

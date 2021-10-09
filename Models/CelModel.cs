@@ -6,7 +6,7 @@ namespace fxl.codes.kisekae.Models
 {
     public class CelModel
     {
-        public const string Regex = "#([0-9]*)[\\.]?([0-9]*?)\\s([a-zA-Z\\-0-9]*\\.[cCeElL]+)\\s[\\*]?([0-9]*)?\\s?:([0-9\\s]*);(.*)";
+        public const string Regex = @"#(\d*)\.?(\d*)\s*([\w\d\-]*\.[cCeElL]*)\s*\*?(\d*)?\s*\:?([\d\s]*)?;?([\w\d\-\s\%]*)";
         public Dictionary<int, string> ImageByPalette = new();
 
         public CelModel(string line)
@@ -14,32 +14,33 @@ namespace fxl.codes.kisekae.Models
             var matcher = new Regex(Regex);
             var match = matcher.Match(line);
 
-            foreach (var group in matcher.GetGroupNames())
+            foreach (var groupName in matcher.GetGroupNames())
             {
-                if (group == "0") continue;
+                if (groupName == "0") continue;
 
-                match.Groups.TryGetValue(group, out var value);
-                if (string.IsNullOrEmpty(value?.Value)) continue;
+                match.Groups.TryGetValue(groupName, out var group);
+                if (string.IsNullOrEmpty(group?.Value)) continue;
+                var value = group.Value.Trim();
 
-                switch (group)
+                switch (groupName)
                 {
                     case "1":
-                        Id = int.Parse(value.Value);
+                        Id = int.Parse(value);
                         break;
                     case "2":
-                        Fix = int.Parse(value.Value);
+                        Fix = int.Parse(value);
                         break;
                     case "3":
-                        FileName = value.Value;
+                        FileName = value;
                         break;
                     case "4":
-                        PaletteId = int.Parse(value.Value);
+                        PaletteId = int.Parse(value);
                         break;
                     case "5":
-                        foreach (var id in value.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)) Sets[int.Parse(id)] = true;
+                        foreach (var id in value.Split(' ', StringSplitOptions.RemoveEmptyEntries)) Sets[int.Parse(id)] = true;
                         break;
                     case "6":
-                        Comment = value.Value;
+                        Comment = value;
                         break;
                 }
             }
