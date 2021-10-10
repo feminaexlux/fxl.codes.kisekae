@@ -23,7 +23,9 @@ namespace fxl.codes.kisekae.Services
         public PlaysetModel ReadCnf(IFormFile file)
         {
             _logger.LogTrace($"Reading filename {file.FileName}");
-            return ParseStream(file.OpenReadStream());
+            var set = ParseStream(file.OpenReadStream());
+            set.Name = file.FileName;
+            return set;
         }
 
         public PlaysetModel ParseStream(Stream fileStream, string directory = null)
@@ -65,8 +67,6 @@ namespace fxl.codes.kisekae.Services
             }
             
             SetInitialPositions(model, initialPositions.ToString());
-            if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
-
             if (string.IsNullOrEmpty(directory)) return model;
             
             foreach (var palette in model.Palettes)
@@ -78,6 +78,9 @@ namespace fxl.codes.kisekae.Services
             {
                 _fileParser.ParseCel(directory, cel, model.Palettes);
             }
+            
+            if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
+            model.Cels.Reverse();
 
             return model;
         }

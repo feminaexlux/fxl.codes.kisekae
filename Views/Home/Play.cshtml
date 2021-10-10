@@ -1,29 +1,26 @@
 @model PlaysetModel
 
 @{
-    ViewBag.Title = "Play";
+    ViewBag.Title = $"Play with {Model.Name}";
     Layout = "_Layout";
 }
 
-<div>
-    @foreach (var palette in Model.Palettes)
-    {
-        <p>
-            Start Palette
-            @palette.Comment<br>
-            @foreach (var color in palette.Colors)
-            {
-                <span style="background-color: #@(color.ToHex())">@color</span>
-            }
-            <br>
-            End Palette
-        </p>
-    }
-</div>
-
-<div>
-    @foreach (var cel in Model.Cels)
-    {
-        <img src="data:image/gif;base64,@cel.DefaultImage" alt="@cel.FileName">
-    }
-</div>
+<header id="play_menu">
+    <ul>
+        <li>
+            <button class="mdc-button mdc-button--icon-trailing" data-rel="reset">
+                <span class="mdc-button__ripple"></span>
+                <span class="mdc-button__label">Reset</span>
+                <i class="material-icons mdc-button__icon" aria-hidden="true">restart_alt</i>
+            </button>
+        </li>
+        <li class="mdc-typography--button">Sets</li>
+    </ul>
+</header>
+<article id="play_area" style="background-color: #@Model.BorderColor"></article>
+@section Scripts
+{
+    <script>
+        document.kisekae.load("play_area", "play_menu", @Json.Serialize(Model))
+    </script>
+}

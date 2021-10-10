@@ -9,7 +9,7 @@
         <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
         <link rel="stylesheet" href="~/css/main.css"/>
     </head>
-    <body>
+    <body class="mdc-typography">
         <header class="mdc-top-app-bar">
             <div class="mdc-top-app-bar__row">
                 <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
@@ -22,6 +22,18 @@
                     <a class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Search">search</a>
                     <a class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Options">more_vert</a>
                 </section>
+            </div>
+            <div role="progressbar" class="mdc-linear-progress" aria-label="Loading Progress" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                <div class="mdc-linear-progress__buffer">
+                    <div class="mdc-linear-progress__buffer-bar"></div>
+                    <div class="mdc-linear-progress__buffer-dots"></div>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
             </div>
         </header>
         <main class="mdc-top-app-bar--fixed-adjust" role="main">

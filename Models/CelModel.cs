@@ -52,5 +52,11 @@ namespace fxl.codes.kisekae.Models
         public Coordinate[] InitialPositions { get; } = new Coordinate[10];
         public string DefaultImage => ImageByPalette.ContainsKey(PaletteId) ? ImageByPalette[PaletteId] : null;
         public Coordinate Offset { get; set; }
+
+        public Coordinate PositionForSet(int set)
+        {
+            var current = InitialPositions[set];
+            return current == null ? new Coordinate(0, 0) : new Coordinate(current.X + Offset.X, current.Y + Offset.Y);
+        }
     }
 }

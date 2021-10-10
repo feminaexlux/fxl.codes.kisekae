@@ -7,6 +7,6 @@
     "preserveConstEnums": true,
     "sourceMap": true
   },
-  "include": ["Scripts/*"],
+  "include": ["./Scripts/*"],
   "exclude": ["node_modules"]
 }

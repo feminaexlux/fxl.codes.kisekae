@@ -27,8 +27,8 @@ module.exports = [{
                             name: 'css/main.css',
                         },
                     },
-                    { loader: 'extract-loader' },
-                    { loader: 'css-loader' },
+                    {loader: 'extract-loader'},
+                    {loader: 'css-loader'},
                     {
                         loader: 'sass-loader',
                         options: {
@@ -46,7 +46,11 @@ module.exports = [{
                     },
                 ]
             },
-            { test: /\.tsx?$/, loader: "ts-loader" }
+            {test: /\.tsx?$/, loader: "ts-loader"}
         ]
+    },
+    stats: {
+        // Display bailout reasons
+        optimizationBailout: true,
     },
 }];

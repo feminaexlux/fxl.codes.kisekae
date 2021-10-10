@@ -64,6 +64,7 @@ namespace fxl.codes.kisekae.Controllers
         {
             var stream = _storage.OpenFile(Path.Combine(directory, file), FileMode.Open);
             var model = _readerService.ParseStream(stream, directory);
+            model.Name = file;
             return View("Play", model);
         }
 
