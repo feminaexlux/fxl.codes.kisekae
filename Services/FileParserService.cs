@@ -14,6 +14,7 @@ namespace fxl.codes.kisekae.Services
     public class FileParserService
     {
         private static readonly byte[] KissHeader = Encoding.ASCII.GetBytes("KiSS");
+        private static readonly Color Transparent = Color.Black.WithAlpha(0);
 
         private readonly ILogger<FileParserService> _logger;
         private readonly IsolatedStorageFile _storage;
@@ -64,7 +65,8 @@ namespace fxl.codes.kisekae.Services
                 var xOffset = BitConverter.ToInt16(buffer, 12);
                 var yOffset = BitConverter.ToInt16(buffer, 14);
 
-                cel.ImageByPalette = GetCelImages(buffer[32..], palettes.ToArray(), width, height, pixelBits, xOffset, yOffset);
+                cel.ImageByPalette = GetCelImages(buffer[32..], palettes.ToArray(), width, height, pixelBits);
+                cel.Offset = new Coordinate(xOffset, yOffset);
             }
             else
             {
@@ -86,51 +88,37 @@ namespace fxl.codes.kisekae.Services
             return buffer;
         }
 
-        private Color[] GetColors(byte[] bytes, int depth = 12, int colorsPerGroup = 16, int groups = 10)
+        private Color[] GetColors(IReadOnlyCollection<byte> bytes, int depth = 12, int colorsPerGroup = 16, int groups = 10)
         {
             _logger.LogTrace("Converting byte array to colors");
-            var colorCounter = 0;
+            var colorValues = GetValues(bytes, depth / 3);
             var colors = new Color[colorsPerGroup * groups];
-            var chunkSize = depth == 12 ? 2 : 3;
+            var length = depth == 12 ? 4 : 3;
+            var multiplier = depth == 12 ? 16 : 1;
+            // Nibbles order for 12 bits: R, B, 0, G
 
-            for (var index = 0; index < bytes.Length; index += chunkSize)
+            for (var groupIndex = 0; groupIndex < groups; groupIndex++)
+            for (var colorIndex = 0; colorIndex < colorsPerGroup; colorIndex++)
             {
-                colors[colorCounter] = GetColor(bytes[index..(index + chunkSize)], depth);
-                colorCounter++;
+                var start = (groupIndex + colorIndex) * length;
+                var red = colorValues[start] * multiplier;
+                var green = colorValues[start + (depth == 12 ? 3 : 1)] * multiplier;
+                var blue = colorValues[start + (depth == 12 ? 1 : 2)] * multiplier;
+                colors[groupIndex + colorIndex] = Color.FromRgb(Convert.ToByte(red), Convert.ToByte(green), Convert.ToByte(blue));
             }
 
             return colors;
         }
 
-        private static Color GetColor(IReadOnlyList<byte> bytes, int depth)
-        {
-            if (depth != 12) return Color.FromRgb(bytes[0], bytes[1], bytes[2]);
-
-            var redBlue = bytes[0];
-            var red = (redBlue >> 4) & 0x0F;
-            red += red * 16;
-
-            var blue = redBlue & 0x0F;
-            blue += blue * 16;
-
-            var zeroGreen = bytes[1];
-            var green = zeroGreen & 0x0F;
-            green += green * 16;
-
-            return Color.FromRgb(Convert.ToByte(red), Convert.ToByte(green), Convert.ToByte(blue));
-        }
-
-        private Dictionary<int, string> GetCelImages(IReadOnlyList<byte> bytes,
+        private Dictionary<int, string> GetCelImages(IReadOnlyCollection<byte> bytes,
                                                      IReadOnlyList<PaletteModel> palettes,
                                                      int width,
                                                      int height,
-                                                     int pixelBits = 4,
-                                                     int xOffset = 0,
-                                                     int yOffset = 0)
+                                                     int pixelBits = 4)
         {
             _logger.LogTrace("Converting byte array to base64 encoded gifs per palette");
             var dictionary = new Dictionary<int, string>();
-            var step = (int)Math.Ceiling((double)8 / pixelBits);
+            var values = GetValues(bytes, pixelBits);
 
             for (var paletteIndex = 0; paletteIndex < palettes.Count; paletteIndex++)
             {
@@ -141,20 +129,14 @@ namespace fxl.codes.kisekae.Services
                 for (var row = 0; row < height; row++)
                 {
                     var span = bitmap.GetPixelRowSpan(row);
-                    for (var column = 0; column < width; column += step)
+                    for (var column = 0; column < width; column++)
                     {
-                        var pixelByte = bytes[index];
-                        var nib1 = (pixelByte >> 4) & 0x0F;
-                        span[column] = nib1 == 0 ? Color.Black.WithAlpha(0) : palette.Colors[nib1];
-
-                        if (column + 1 < width)
-                        {
-                            var nib2 = pixelByte & 0x0F;
-                            span[column + 1] = nib2 == 0 ? Color.Black.WithAlpha(0) : palette.Colors[nib2];
-                        }
-
+                        var value = values[index];
+                        span[column] = value == 0 ? Transparent : palette.Colors[value];
                         index++;
                     }
+
+                    if (width % 2 != 0 && pixelBits == 4) index++;
                 }
 
                 using var memory = new MemoryStream();
@@ -163,6 +145,24 @@ namespace fxl.codes.kisekae.Services
             }
 
             return dictionary;
+        }
+
+        private static int[] GetValues(IReadOnlyCollection<byte> bytes, int bits = 4)
+        {
+            if (bits != 4) return bytes.Select(Convert.ToInt32).ToArray();
+            
+            var values = new int[bytes.Count * 2];
+            var index = 0;
+            foreach (var slice in bytes)
+            {
+                var nib1 = (slice >> 4) & 0x0F;
+                var nib2 = slice & 0x0F;
+                values[index] = nib1;
+                values[index + 1] = nib2;
+                index += 2;
+            }
+
+            return values;
         }
     }
 }

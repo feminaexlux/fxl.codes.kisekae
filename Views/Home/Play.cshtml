@@ -9,11 +9,14 @@
     @foreach (var palette in Model.Palettes)
     {
         <p>
+            Start Palette
             @palette.Comment<br>
             @foreach (var color in palette.Colors)
             {
                 <span style="background-color: #@(color.ToHex())">@color</span>
             }
+            <br>
+            End Palette
         </p>
     }
 </div>
@@ -21,9 +24,6 @@
 <div>
     @foreach (var cel in Model.Cels)
     {
-        foreach (var (key, value) in cel.ImageByPalette)
-        {
-            <img src="data:image/gif;base64,@value" alt="@key">
-        }
+        <img src="data:image/gif;base64,@cel.DefaultImage" alt="@cel.FileName">
     }
 </div>

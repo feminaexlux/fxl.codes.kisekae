@@ -30,6 +30,7 @@ namespace fxl.codes.kisekae.Services
         {
             var model = new PlaysetModel();
             var initialPositions = new StringBuilder();
+            var borderColorIndex = 0;
             
             using var reader = new StreamReader(fileStream);
             while (!reader.EndOfStream)
@@ -48,13 +49,13 @@ namespace fxl.codes.kisekae.Services
                     case '[':
                         var borderValue = line.Replace("[", "");
                         if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
-                        model.BorderColorIndex = int.Parse(borderValue);
+                        borderColorIndex = int.Parse(borderValue);
                         break;
                     case '%':
-                        model.Palettes.Add(new PaletteModel(line));
+                        model.Palettes.Add(new PaletteModel(_logger, line));
                         break;
                     case '#':
-                        model.Cels.Add(new CelModel(line));
+                        model.Cels.Add(new CelModel(_logger, line));
                         break;
                     case '$':
                     case ' ':
@@ -64,6 +65,7 @@ namespace fxl.codes.kisekae.Services
             }
             
             SetInitialPositions(model, initialPositions.ToString());
+            if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
 
             if (string.IsNullOrEmpty(directory)) return model;
             
@@ -95,7 +97,7 @@ namespace fxl.codes.kisekae.Services
                     
                     foreach (var cel in model.Cels.Where(x => x.Id == innerIndex - 1))
                     {
-                        cel.InitialPositions[index] = new Point(int.Parse(point[0]), int.Parse(point[1]));
+                        cel.InitialPositions[index] = new Coordinate(int.Parse(point[0]), int.Parse(point[1]));
                     }
                 }
             }
