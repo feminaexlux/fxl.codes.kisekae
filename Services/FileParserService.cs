@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using fxl.codes.kisekae.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -23,6 +26,44 @@ namespace fxl.codes.kisekae.Services
         {
             _logger = logger;
             _storage = IsolatedStorageFile.GetUserStoreForApplication();
+        }
+
+        public void UnzipLzh(IFormFile file)
+        {
+            if (_storage.FileExists(file.FileName)) _storage.DeleteFile(file.FileName);
+            
+            using var writer = _storage.CreateFile(file.FileName);
+            file.CopyTo(writer);
+            writer.Flush();
+            writer.Close();
+
+            var root = _storage.GetType()
+                .GetProperty("RootDirectory", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(_storage)
+                .ToString() ?? "";
+
+            var directory = Path.GetFileNameWithoutExtension(file.FileName);
+            if (_storage.DirectoryExists(directory)) _storage.DeleteDirectory(directory);
+            _storage.CreateDirectory(directory);
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "7z",
+                    Arguments = $"x {Path.Combine(root, file.FileName)} -o{Path.Combine(root, directory)}",
+                    UseShellExecute = false,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true
+                }
+            };
+
+            if (!process.Start()) throw new InvalidDataException("Unable to call p7zip to extract archive");
+            
+            while (!process.StandardOutput.EndOfStream) _logger.LogTrace(process.StandardOutput.ReadLine());
+            process.WaitForExit();
+            
+            _storage.DeleteFile(file.FileName);
         }
 
         public void ParsePalette(string directory, PaletteModel palette)
@@ -132,7 +173,7 @@ namespace fxl.codes.kisekae.Services
                     for (var column = 0; column < width; column++)
                     {
                         var value = values[index];
-                        span[column] = value == 0 ? Transparent : palette.Colors[value];
+                        span[column] = value == 0 || value >= palette.Colors.Length ? Transparent : palette.Colors[value];
                         index++;
                     }
 
@@ -150,7 +191,7 @@ namespace fxl.codes.kisekae.Services
         private static int[] GetValues(IReadOnlyCollection<byte> bytes, int bits = 4)
         {
             if (bits != 4) return bytes.Select(Convert.ToInt32).ToArray();
-            
+
             var values = new int[bytes.Count * 2];
             var index = 0;
             foreach (var slice in bytes)

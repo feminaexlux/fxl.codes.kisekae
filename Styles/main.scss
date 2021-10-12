@@ -7,8 +7,8 @@ $fxl-orange: #ff6e40;
 );
 
 @use "@material/button/styles";
+@use "@material/button/mixins" as button-mixins;
 @use "@material/icon-button/icon-button";
-@use "@material/linear-progress";
 @use "@material/top-app-bar/mdc-top-app-bar";
 @use "@material/typography/mdc-typography";
 
@@ -40,6 +40,10 @@ body {
 
         li {
           margin: 0 0.25em;
+
+          button.active-set {
+            @include button-mixins.filled-accessible($fxl-gray);
+          }
         }
       }
     }

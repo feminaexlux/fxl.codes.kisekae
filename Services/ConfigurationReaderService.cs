@@ -43,10 +43,10 @@ namespace fxl.codes.kisekae.Services
                 switch (line.ToCharArray()[0])
                 {
                     case '(':
-                        var resolutionRegex = new Regex("\\(([0-9]*),([0-9]*)\\)");
+                        var resolutionRegex = new Regex(@"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)");
                         var resolutionMatch = resolutionRegex.Match(line);
-                        model.Width = int.Parse(resolutionMatch.Groups[1].Value);
-                        model.Height = int.Parse(resolutionMatch.Groups[2].Value);
+                        model.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
+                        model.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
                         break;
                     case '[':
                         var borderValue = line.Replace("[", "");

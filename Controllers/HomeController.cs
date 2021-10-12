@@ -13,14 +13,16 @@ namespace fxl.codes.kisekae.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly FileParserService _fileParserService;
         private readonly ILogger<HomeController> _logger;
         private readonly ConfigurationReaderService _readerService;
         private readonly IsolatedStorageFile _storage;
 
-        public HomeController(ILogger<HomeController> logger, ConfigurationReaderService readerService)
+        public HomeController(ILogger<HomeController> logger, ConfigurationReaderService readerService, FileParserService fileParserService)
         {
             _logger = logger;
             _readerService = readerService;
+            _fileParserService = fileParserService;
 
             _storage = IsolatedStorageFile.GetUserStoreForApplication();
         }
@@ -35,16 +37,13 @@ namespace fxl.codes.kisekae.Controllers
             {
                 var files = _storage.GetFileNames(Path.Combine(directory, "*.cnf"));
                 if (files.Length <= 0) continue;
-                
+
                 var doll = new DirectoryModel(directory);
-                foreach (var file in files)
-                {
-                    doll.Configurations.Add(new ConfigurationModel(file));
-                }
-                
+                foreach (var file in files) doll.Configurations.Add(new ConfigurationModel(file));
+
                 model.Add(doll);
             }
-            
+
             return View(model);
         }
 
@@ -52,13 +51,14 @@ namespace fxl.codes.kisekae.Controllers
         public IActionResult Upload(IFormFile file)
         {
             _logger.LogTrace($"File uploaded: {file?.FileName}");
-            if (!(file?.FileName.EndsWith("cnf", StringComparison.InvariantCultureIgnoreCase) ?? false))
-                throw new Exception("Please select a *.cnf file");
-            
-            var model = _readerService.ReadCnf(file);
-            return View("Play", model);
+            if (!(file?.FileName.EndsWith("lzh", StringComparison.InvariantCultureIgnoreCase) ?? false))
+                throw new Exception("Please select a *.lzh file");
+
+            _fileParserService.UnzipLzh(file);
+
+            return Redirect("/");
         }
-        
+
         [HttpPost]
         public IActionResult Select(string directory, string file)
         {

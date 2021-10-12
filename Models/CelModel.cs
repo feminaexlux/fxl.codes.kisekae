@@ -24,6 +24,14 @@ namespace fxl.codes.kisekae.Models
                 match.Groups.TryGetValue(groupName, out var group);
                 if (string.IsNullOrEmpty(group?.Value))
                 {
+                    if (string.Equals(groupName, "Sets"))
+                    {
+                        for (var index = 0; index < Sets.Length; index++)
+                        {
+                            Sets[index] = true;
+                        }
+                    }
+                    
                     logger.LogWarning($"Unable to find regex group {groupName} in {line}");
                     continue;
                 }

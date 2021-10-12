@@ -1,7 +1,7 @@
 import {MDCLinearProgress} from "@material/linear-progress"
 import {MDCRipple} from "@material/ripple"
 import {MDCTopAppBar} from "@material/top-app-bar"
-import {draw} from "./function"
+import {setPlayArea} from "./function"
 import {IPlayset} from "./pto"
 import Builder from "./utility"
 
@@ -35,7 +35,8 @@ export default class Main {
 
         let reset = header.querySelector(`button[data-rel="reset"]`)
         reset.addEventListener("click", () => {
-            this.setPlayArea(container, playset, 0)
+            // TODO reset positions
+            setPlayArea(header, container, playset, 0)
         })
 
         playset.enabledSets.forEach((enabled, index) => {
@@ -43,31 +44,26 @@ export default class Main {
                 let button = new Builder("li")
                     .addChildren(new Builder("button")
                         .addClass("mdc-button")
+                        .addAttributes({"data-set": index})
                         .addChildren(
                             new Builder("span").addClass("mdc-button__ripple"),
                             new Builder("span").addClass("mdc-button__label").setText(index.toString())
                         )).build()
 
                 button.addEventListener("click", () => {
-                    this.setPlayArea(container, playset, index)
+                    setPlayArea(header, container, playset, index)
                 })
 
                 menu.appendChild(button)
             }
         })
 
-        this.setPlayArea(container, playset, set)
-    }
-
-    private setPlayArea(container: HTMLElement, playset: IPlayset, set: number): void {
-        // Empty
-        while (container.firstChild) container.removeChild(container.firstChild)
-
-        let canvas = draw(playset, set)
-        container.appendChild(canvas)
+        setPlayArea(header, container, playset, set)
     }
 
     private init() {
+        this.linearProgress.open()
+
         let main = document.querySelector("main")
         let directories = main.querySelector("ul")
 
@@ -77,6 +73,9 @@ export default class Main {
 
         links.forEach(link => {
             link.addEventListener("click", () => {
+                this.linearProgress.determinate = false
+                this.linearProgress.open()
+
                 let directory = link.attributes.getNamedItem("data-directory")
                 let form = new Builder("form")
                     .addAttributes({"method": "post", "action": "/Home/Select"})
