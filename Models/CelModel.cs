@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using fxl.codes.kisekae.Services;
 using Microsoft.Extensions.Logging;
@@ -58,13 +59,10 @@ namespace fxl.codes.kisekae.Models
         public bool[] Sets { get; } = new bool[10];
         public string Comment { get; init; }
         public Coordinate[] InitialPositions { get; } = new Coordinate[10];
-        public string DefaultImage => ImageByPalette.ContainsKey(PaletteId) ? ImageByPalette[PaletteId] : null;
+        [JsonIgnore] public string DefaultImage => ImageByPalette.ContainsKey(PaletteId) ? ImageByPalette[PaletteId] : null;
         public Coordinate Offset { get; set; }
-
-        public Coordinate PositionForSet(int set)
-        {
-            var current = InitialPositions[set];
-            return current == null ? new Coordinate(0, 0) : new Coordinate(current.X + Offset.X, current.Y + Offset.Y);
-        }
+        [JsonIgnore] public int Height { get; internal set; }
+        [JsonIgnore] public int Width { get; internal set; }
+        [JsonIgnore] public int ZIndex { get; internal set; }
     }
 }

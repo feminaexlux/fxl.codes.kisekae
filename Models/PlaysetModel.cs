@@ -1,17 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
 using SixLabors.ImageSharp;
 
 namespace fxl.codes.kisekae.Models
 {
     public class PlaysetModel
     {
-        public int[] CurrentPalettes = new int[10];
         public string Name { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
-        public Color BorderColor { get; set; } = Color.Black;
-
-        public List<PaletteModel> Palettes { get; } = new();
+        [JsonIgnore] public Color BorderColor { get; set; } = Color.Black;
+        [JsonIgnore] public List<PaletteModel> Palettes { get; } = new();
         public List<CelModel> Cels { get; } = new();
 
         public bool[] EnabledSets
@@ -19,10 +19,8 @@ namespace fxl.codes.kisekae.Models
             get
             {
                 var enabled = new bool[10];
-                foreach (var cel in Cels)
-                    for (var index = 0; index < cel.Sets.Length; index++)
-                        if (cel.Sets[index])
-                            enabled[index] = true;
+
+                for (var index = 0; index < enabled.Length; index++) enabled[index] = Cels.Any(x => x.Sets[index]);
 
                 return enabled;
             }

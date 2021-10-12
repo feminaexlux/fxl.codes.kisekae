@@ -4,15 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using fxl.codes.kisekae.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace fxl.codes.kisekae.Services
 {
     public class ConfigurationReaderService
     {
-        private readonly ILogger<ConfigurationReaderService> _logger;
         private readonly FileParserService _fileParser;
+        private readonly ILogger<ConfigurationReaderService> _logger;
 
         public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger, FileParserService fileParser)
         {
@@ -20,20 +19,12 @@ namespace fxl.codes.kisekae.Services
             _fileParser = fileParser;
         }
 
-        public PlaysetModel ReadCnf(IFormFile file)
-        {
-            _logger.LogTrace($"Reading filename {file.FileName}");
-            var set = ParseStream(file.OpenReadStream());
-            set.Name = file.FileName;
-            return set;
-        }
-
         public PlaysetModel ParseStream(Stream fileStream, string directory = null)
         {
             var model = new PlaysetModel();
             var initialPositions = new StringBuilder();
             var borderColorIndex = 0;
-            
+
             using var reader = new StreamReader(fileStream);
             while (!reader.EndOfStream)
             {
@@ -65,22 +56,21 @@ namespace fxl.codes.kisekae.Services
                         break;
                 }
             }
-            
+
             SetInitialPositions(model, initialPositions.ToString());
             if (string.IsNullOrEmpty(directory)) return model;
-            
-            foreach (var palette in model.Palettes)
-            {
-                _fileParser.ParsePalette(directory, palette);
-            }
 
+            foreach (var palette in model.Palettes) _fileParser.ParsePalette(directory, palette);
+
+            var celIndex = 0;
             foreach (var cel in model.Cels.Where(x => !string.IsNullOrEmpty(x.FileName)))
             {
                 _fileParser.ParseCel(directory, cel, model.Palettes);
+                cel.ZIndex = (model.Cels.Count - celIndex) * 10;
+                celIndex++;
             }
-            
+
             if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
-            model.Cels.Reverse();
 
             return model;
         }
@@ -91,17 +81,13 @@ namespace fxl.codes.kisekae.Services
             for (var index = 0; index < sets.Length; index++)
             {
                 var value = sets[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                model.CurrentPalettes[index] = int.Parse(value[0]);
-
                 for (var innerIndex = 1; innerIndex < value.Length; innerIndex++)
                 {
                     if (value[innerIndex] == "*") continue;
                     var point = value[innerIndex].Split(',', StringSplitOptions.RemoveEmptyEntries);
-                    
+
                     foreach (var cel in model.Cels.Where(x => x.Id == innerIndex - 1))
-                    {
                         cel.InitialPositions[index] = new Coordinate(int.Parse(point[0]), int.Parse(point[1]));
-                    }
                 }
             }
         }

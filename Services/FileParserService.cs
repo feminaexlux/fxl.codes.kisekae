@@ -108,6 +108,8 @@ namespace fxl.codes.kisekae.Services
 
                 cel.ImageByPalette = GetCelImages(buffer[32..], palettes.ToArray(), width, height, pixelBits);
                 cel.Offset = new Coordinate(xOffset, yOffset);
+                cel.Height = height;
+                cel.Width = width;
             }
             else
             {
@@ -115,6 +117,8 @@ namespace fxl.codes.kisekae.Services
                 var height = BitConverter.ToInt16(buffer, 2);
 
                 cel.ImageByPalette = GetCelImages(buffer[4..], palettes.ToArray(), width, height);
+                cel.Height = height;
+                cel.Width = width;
             }
         }
 

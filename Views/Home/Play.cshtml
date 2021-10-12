@@ -1,8 +1,7 @@
 @model PlaysetModel
 
 @{
-    ViewBag.Title = $"Play with {Model.Name}";
-    Layout = "_Layout";
+    ViewData["Title"] = $"Play with {Model.Name}";
 }
 
 <header id="play_menu">
@@ -17,10 +16,20 @@
         <li class="mdc-typography--button">Sets</li>
     </ul>
 </header>
-<article id="play_area" style="background-color: #@Model.BorderColor"></article>
+<article id="play_area" style="background-color: #@Model.BorderColor">
+    <div id="play_space" style="height: @(Model.Height)px; width: @(Model.Width)px">
+        @foreach (var cel in Model.Cels)
+        {
+            <div class="cel-image"
+                 style="background-image: url('data:image/gif;base64,@cel.DefaultImage'); height: @(cel.Height)px; width: @(cel.Width)px; z-index: @cel.ZIndex;"
+                 data-id="@cel.Id"
+                 data-fix="@cel.Fix"></div>
+        }
+    </div>
+</article>
 @section Scripts
 {
     <script>
-        document.kisekae.load("play_area", "play_menu", @Json.Serialize(Model))
+        document.kisekae.load("play_space", "play_menu", @Json.Serialize(Model))
     </script>
 }

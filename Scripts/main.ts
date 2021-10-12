@@ -2,7 +2,7 @@ import {MDCLinearProgress} from "@material/linear-progress"
 import {MDCRipple} from "@material/ripple"
 import {MDCTopAppBar} from "@material/top-app-bar"
 import {setPlayArea} from "./function"
-import {IPlayset} from "./pto"
+import {Playset} from "./pto"
 import Builder from "./utility"
 
 declare global {
@@ -28,7 +28,7 @@ export default class Main {
         this.init()
     }
 
-    public load(containerId: string, headerId: string, playset: IPlayset, set: number = 0): void {
+    public load(containerId: string, headerId: string, playset: Playset, set: number = 0): void {
         let container = document.getElementById(containerId)
         let header = document.getElementById(headerId)
         let menu = header.querySelector("ul")
@@ -36,7 +36,7 @@ export default class Main {
         let reset = header.querySelector(`button[data-rel="reset"]`)
         reset.addEventListener("click", () => {
             // TODO reset positions
-            setPlayArea(header, container, playset, 0)
+            setPlayArea(header, container, playset, set)
         })
 
         playset.enabledSets.forEach((enabled, index) => {
@@ -56,6 +56,10 @@ export default class Main {
 
                 menu.appendChild(button)
             }
+        })
+        
+        playset.cels.forEach(cel => {
+            cel.currentPositions = [...cel.initialPositions]
         })
 
         setPlayArea(header, container, playset, set)
