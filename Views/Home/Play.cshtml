@@ -18,12 +18,13 @@
 </header>
 <article id="play_area" style="background-color: #@Model.BorderColor">
     <div id="play_space" style="height: @(Model.Height)px; width: @(Model.Width)px">
-        @foreach (var cel in Model.Cels)
+        @for (var index = 0; index < Model.Cels.Count; index++)
         {
+            var cel = Model.Cels[index];
             <div class="cel-image"
-                 style="background-image: url('data:image/gif;base64,@cel.DefaultImage'); height: @(cel.Height)px; width: @(cel.Width)px; z-index: @cel.ZIndex;"
+                 style="background-image: url('data:image/gif;base64,@cel.DefaultImage'); height: @(cel.Height)px; width: @(cel.Width)px; z-index: @cel.ZIndex; opacity: @cel.Opacity"
                  data-id="@cel.Id"
-                 data-fix="@cel.Fix"></div>
+                 data-index="@index"></div>
         }
     </div>
 </article>

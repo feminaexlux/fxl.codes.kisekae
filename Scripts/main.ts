@@ -1,8 +1,8 @@
 import {MDCLinearProgress} from "@material/linear-progress"
 import {MDCRipple} from "@material/ripple"
 import {MDCTopAppBar} from "@material/top-app-bar"
-import {setPlayArea} from "./function"
 import {Playset} from "./pto"
+import Tracker from "./tracker"
 import Builder from "./utility"
 
 declare global {
@@ -30,39 +30,10 @@ export default class Main {
 
     public load(containerId: string, headerId: string, playset: Playset, set: number = 0): void {
         let container = document.getElementById(containerId)
-        let header = document.getElementById(headerId)
-        let menu = header.querySelector("ul")
+        let menu = document.getElementById(headerId).querySelector("ul")
 
-        let reset = header.querySelector(`button[data-rel="reset"]`)
-        reset.addEventListener("click", () => {
-            // TODO reset positions
-            setPlayArea(header, container, playset, set)
-        })
-
-        playset.enabledSets.forEach((enabled, index) => {
-            if (enabled) {
-                let button = new Builder("li")
-                    .addChildren(new Builder("button")
-                        .addClass("mdc-button")
-                        .addAttributes({"data-set": index})
-                        .addChildren(
-                            new Builder("span").addClass("mdc-button__ripple"),
-                            new Builder("span").addClass("mdc-button__label").setText(index.toString())
-                        )).build()
-
-                button.addEventListener("click", () => {
-                    setPlayArea(header, container, playset, index)
-                })
-
-                menu.appendChild(button)
-            }
-        })
-        
-        playset.cels.forEach(cel => {
-            cel.currentPositions = [...cel.initialPositions]
-        })
-
-        setPlayArea(header, container, playset, set)
+        let tracker = new Tracker(playset, menu, container)
+        tracker.setPlayArea(set)
     }
 
     private init() {

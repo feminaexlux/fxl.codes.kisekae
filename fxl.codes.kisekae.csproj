@@ -6,9 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <TypeScriptCompile Include="Scripts\function.ts" />
       <TypeScriptCompile Include="Scripts\main.ts" />
       <TypeScriptCompile Include="Scripts\pto.ts" />
+      <TypeScriptCompile Include="Scripts\tracker.ts" />
       <TypeScriptCompile Include="Scripts\utility.ts" />
     </ItemGroup>
 
