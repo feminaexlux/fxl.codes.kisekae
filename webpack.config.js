@@ -1,7 +1,6 @@
 const path = require('path');
 
 module.exports = [{
-    mode: "development",
     entry: {
         main: "./Scripts/main.ts",
         style: "./Styles/main.scss"
