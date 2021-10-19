@@ -4,3 +4,6 @@
 /obj/
 *.DotSettings
 *.DotSettings.user
+
+*.Development.json
+*.Release.json
