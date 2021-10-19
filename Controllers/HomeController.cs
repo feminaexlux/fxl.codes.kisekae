@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Threading.Tasks;
 using fxl.codes.kisekae.Models;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Http;
@@ -13,16 +14,16 @@ namespace fxl.codes.kisekae.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly FileParserService _fileParserService;
+        private readonly DatabaseService _databaseService;
         private readonly ILogger<HomeController> _logger;
         private readonly ConfigurationReaderService _readerService;
         private readonly IsolatedStorageFile _storage;
 
-        public HomeController(ILogger<HomeController> logger, ConfigurationReaderService readerService, FileParserService fileParserService)
+        public HomeController(ILogger<HomeController> logger, ConfigurationReaderService readerService, DatabaseService databaseService)
         {
             _logger = logger;
             _readerService = readerService;
-            _fileParserService = fileParserService;
+            _databaseService = databaseService;
 
             _storage = IsolatedStorageFile.GetUserStoreForApplication();
         }
@@ -48,13 +49,13 @@ namespace fxl.codes.kisekae.Controllers
         }
 
         [HttpPost]
-        public IActionResult Upload(IFormFile file)
+        public async Task<IActionResult> Upload(IFormFile file)
         {
             _logger.LogTrace($"File uploaded: {file?.FileName}");
             if (!(file?.FileName.EndsWith("lzh", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 throw new Exception("Please select a *.lzh file");
 
-            _fileParserService.UnzipLzh(file);
+            await _databaseService.StoreToDatabase(file);
 
             return Redirect("/");
         }

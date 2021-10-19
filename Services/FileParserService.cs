@@ -28,12 +28,17 @@ namespace fxl.codes.kisekae.Services
             _storage = IsolatedStorageFile.GetUserStoreForApplication();
         }
 
-        public void UnzipLzh(IFormFile file)
+        public void UnzipLzh(IFormFile file, MemoryStream memoryStream = null)
         {
             if (_storage.FileExists(file.FileName)) _storage.DeleteFile(file.FileName);
-            
+
             using var writer = _storage.CreateFile(file.FileName);
-            file.CopyTo(writer);
+
+            if (memoryStream != null)
+                memoryStream.CopyTo(writer);
+            else
+                file.CopyTo(writer);
+
             writer.Flush();
             writer.Close();
 
@@ -43,7 +48,14 @@ namespace fxl.codes.kisekae.Services
                 .ToString() ?? "";
 
             var directory = Path.GetFileNameWithoutExtension(file.FileName);
-            if (_storage.DirectoryExists(directory)) _storage.DeleteDirectory(directory);
+            if (_storage.DirectoryExists(directory))
+            {
+                var allFiles = _storage.GetFileNames(Path.Combine(directory, "*"));
+                foreach (var existingFile in allFiles) _storage.DeleteFile(Path.Combine(directory, existingFile));
+
+                _storage.DeleteDirectory(directory);
+            }
+
             _storage.CreateDirectory(directory);
 
             var process = new Process
@@ -59,9 +71,11 @@ namespace fxl.codes.kisekae.Services
             };
 
             if (!process.Start()) throw new InvalidDataException("Unable to call p7zip to extract archive");
-            
+
             while (!process.StandardOutput.EndOfStream) _logger.LogTrace(process.StandardOutput.ReadLine());
             process.WaitForExit();
+
+            _storage.DeleteFile(file.FileName);
         }
 
         public void ParsePalette(string directory, PaletteModel palette)
