@@ -38,8 +38,8 @@ namespace fxl.codes.kisekae.Services
             writer.Close();
 
             var root = _storage.GetType()
-                .GetProperty("RootDirectory", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(_storage)
+                .GetProperty("RootDirectory", BindingFlags.Instance | BindingFlags.NonPublic)?
+                .GetValue(_storage)?
                 .ToString() ?? "";
 
             var directory = Path.GetFileNameWithoutExtension(file.FileName);
@@ -62,8 +62,6 @@ namespace fxl.codes.kisekae.Services
             
             while (!process.StandardOutput.EndOfStream) _logger.LogTrace(process.StandardOutput.ReadLine());
             process.WaitForExit();
-            
-            _storage.DeleteFile(file.FileName);
         }
 
         public void ParsePalette(string directory, PaletteModel palette)

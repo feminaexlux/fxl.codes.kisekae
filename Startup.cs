@@ -1,9 +1,11 @@
+using Dapper;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql.Logging;
 
 namespace fxl.codes.kisekae
 {
@@ -24,6 +26,7 @@ namespace fxl.codes.kisekae
 
             services.AddSingleton<ConfigurationReaderService>();
             services.AddSingleton<FileParserService>();
+            services.AddScoped<DatabaseService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -32,6 +35,8 @@ namespace fxl.codes.kisekae
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Trace);
+                NpgsqlLogManager.IsParameterLoggingEnabled = true;
             }
             else
             {
@@ -53,6 +58,8 @@ namespace fxl.codes.kisekae
                     "default",
                     "{controller=Home}/{action=Index}/{id?}");
             });
+
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
         }
     }
 }
