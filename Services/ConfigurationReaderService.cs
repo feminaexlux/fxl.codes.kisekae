@@ -10,6 +10,7 @@ namespace fxl.codes.kisekae.Services
 {
     public class ConfigurationReaderService
     {
+        public const string ResolutionRegexPattern = @"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)";
         private readonly FileParserService _fileParser;
         private readonly ILogger<ConfigurationReaderService> _logger;
 
@@ -26,36 +27,9 @@ namespace fxl.codes.kisekae.Services
             var borderColorIndex = 0;
 
             using var reader = new StreamReader(fileStream);
-            while (!reader.EndOfStream)
-            {
-                var line = reader.ReadLine();
-                if (string.IsNullOrEmpty(line)) continue;
-
-                switch (line.ToCharArray()[0])
-                {
-                    case '(':
-                        var resolutionRegex = new Regex(@"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)");
-                        var resolutionMatch = resolutionRegex.Match(line);
-                        model.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
-                        model.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
-                        break;
-                    case '[':
-                        var borderValue = line.Replace("[", "");
-                        if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
-                        borderColorIndex = int.Parse(borderValue);
-                        break;
-                    case '%':
-                        model.Palettes.Add(new PaletteModel(_logger, line));
-                        break;
-                    case '#':
-                        model.Cels.Add(new CelModel(_logger, line));
-                        break;
-                    case '$':
-                    case ' ':
-                        initialPositions.Append(line.Replace("\\r\\n", "").Replace("\\n", ""));
-                        break;
-                }
-            }
+            var data = reader.ReadToEnd();
+            
+            SetPlaysetProperties(data, model, initialPositions);
 
             SetInitialPositions(model, initialPositions.ToString());
             if (string.IsNullOrEmpty(directory)) return model;
@@ -73,6 +47,39 @@ namespace fxl.codes.kisekae.Services
             if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
 
             return model;
+        }
+
+        public void SetPlaysetProperties(string data, PlaysetModel model, StringBuilder initialPositions)
+        {
+            if (string.IsNullOrEmpty(data)) return;
+
+            foreach (var line in data.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+            {
+                switch (line.ToCharArray()[0])
+                {
+                    case '(':
+                        var resolutionRegex = new Regex(ResolutionRegexPattern);
+                        var resolutionMatch = resolutionRegex.Match(line);
+                        model.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
+                        model.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
+                        break;
+                    case '[':
+                        var borderValue = line[1..];
+                        if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
+                        model.BorderColorIndex = int.Parse(borderValue);
+                        break;
+                    case '%':
+                        model.Palettes.Add(new PaletteModel(_logger, line));
+                        break;
+                    case '#':
+                        model.Cels.Add(new CelModel(_logger, line));
+                        break;
+                    case '$':
+                    case ' ':
+                        initialPositions.Append(line.Replace("\\r\\n", "").Replace("\\n", ""));
+                        break;
+                }
+            }
         }
 
         private static void SetInitialPositions(PlaysetModel model, string positions)

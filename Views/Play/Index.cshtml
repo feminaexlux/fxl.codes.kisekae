@@ -1,0 +1,36 @@
+@model PlaysetModel
+
+@{
+    ViewData["Title"] = $"Play with {Model.Name}";
+}
+
+<header id="play_menu">
+    <ul>
+        <li>
+            <button class="mdc-button mdc-button--icon-trailing" data-rel="reset">
+                <span class="mdc-button__ripple"></span>
+                <span class="mdc-button__label">Reset</span>
+                <i class="material-icons mdc-button__icon" aria-hidden="true">restart_alt</i>
+            </button>
+        </li>
+        <li class="mdc-typography--button">Sets</li>
+    </ul>
+</header>
+<article id="play_area" style="background-color: #@Model.BorderColor">
+    <div id="play_space" style="height: @(Model.Height)px; width: @(Model.Width)px">
+        @for (var index = 0; index < Model.Cels.Count; index++)
+        {
+            var cel = Model.Cels[index];
+            <div class="cel-image"
+                 style="background-image: url('data:image/gif;base64,@cel.DefaultImage'); height: @(cel.Height)px; width: @(cel.Width)px; z-index: @cel.ZIndex; opacity: @cel.Opacity"
+                 data-id="@cel.Id"
+                 data-index="@index"></div>
+        }
+    </div>
+</article>
+@section Scripts
+{
+    <script>
+        document.kisekae.load("play_space", "play_menu", @Json.Serialize(Model))
+    </script>
+}

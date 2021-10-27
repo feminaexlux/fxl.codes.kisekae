@@ -1,5 +1,8 @@
+using Dapper.Contrib.Extensions;
+
 namespace fxl.codes.kisekae.Entities
 {
+    [Table("palette")]
     public class PaletteDto : IKisekaeFile, IKisekaeParseable
     {
         public int Id { get; set; }

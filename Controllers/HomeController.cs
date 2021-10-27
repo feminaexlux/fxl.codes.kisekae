@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Linq;
 using System.Threading.Tasks;
 using fxl.codes.kisekae.Models;
 using fxl.codes.kisekae.Services;
@@ -29,33 +29,20 @@ namespace fxl.codes.kisekae.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var directories = _storage.GetDirectoryNames();
-            var model = new List<DirectoryModel>();
-
-            foreach (var directory in directories)
-            {
-                var files = _storage.GetFileNames(Path.Combine(directory, "*.cnf"));
-                if (files.Length <= 0) continue;
-
-                var doll = new DirectoryModel(directory);
-                foreach (var file in files) doll.Configurations.Add(new ConfigurationModel(file));
-
-                model.Add(doll);
-            }
-
-            return View(model);
+            var files = await _databaseService.GetAll();
+            return View(files.Select(x => new ConfigurationModel(x)));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Upload(IFormFile file)
+        public IActionResult Upload(IFormFile file)
         {
             _logger.LogTrace($"File uploaded: {file?.FileName}");
             if (!(file?.FileName.EndsWith("lzh", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 throw new Exception("Please select a *.lzh file");
 
-            await _databaseService.StoreToDatabase(file);
+            _databaseService.StoreToDatabase(file);
 
             return Redirect("/");
         }

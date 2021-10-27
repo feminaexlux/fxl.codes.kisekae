@@ -1,4 +1,4 @@
-﻿@model IEnumerable<DirectoryModel>
+﻿@model IEnumerable<ConfigurationModel>
 
 @{
     ViewData["Title"] = "Select";
@@ -10,15 +10,15 @@
 </form>
 
 <ul>
-    @foreach (var directory in Model)
+    @foreach (var kiss in Model)
     {
         <li>
-            @directory.Name
+            @kiss.Name
             <ul>
-                @foreach (var config in directory.Configurations)
+                @foreach (var (key, value) in kiss.Configurations)
                 {
                     <li>
-                        <a href="javascript:" data-directory="@directory.Name">@config.Name</a>
+                        <a asp-controller="Play" asp-action="Index" asp-route-id="@kiss.Id" asp-route-configId="@key">@value</a>
                     </li>
                 }
             </ul>

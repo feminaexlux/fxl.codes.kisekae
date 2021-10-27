@@ -10,6 +10,7 @@ namespace fxl.codes.kisekae.Models
         public string Name { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
+        [JsonIgnore] public int BorderColorIndex { get; set; }
         [JsonIgnore] public Color BorderColor { get; set; } = Color.Black;
         [JsonIgnore] public List<PaletteModel> Palettes { get; } = new();
         public List<CelModel> Cels { get; } = new();

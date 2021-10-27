@@ -56,7 +56,7 @@ namespace fxl.codes.kisekae
             {
                 endpoints.MapControllerRoute(
                     "default",
-                    "{controller=Home}/{action=Index}/{id?}");
+                    "{controller=Home}/{action=Index}/{id?}/{configId?}");
             });
 
             DefaultTypeMap.MatchNamesWithUnderscores = true;
