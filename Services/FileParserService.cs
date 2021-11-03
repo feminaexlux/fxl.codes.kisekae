@@ -6,6 +6,7 @@ using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using fxl.codes.kisekae.Entities;
 using fxl.codes.kisekae.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -78,27 +79,22 @@ namespace fxl.codes.kisekae.Services
             _storage.DeleteFile(file.FileName);
         }
 
-        public void ParsePalette(string directory, PaletteModel palette)
+        public Color[] ParsePalette(PaletteDto palette, out int groups, out int colorsPerGroup)
         {
-            _logger.LogTrace($"Reading palette {palette.FileName} from {directory}");
-            var buffer = ReadToBuffer(directory, palette.FileName);
-            if (buffer.Length == 0) return;
+            groups = 0;
+            colorsPerGroup = 0;
+            
+            if (palette.Data.Length == 0) return null;
+            if (!palette.Data[..KissHeader.Length].SequenceEqual(KissHeader)) return GetColors(palette.Data);
+            
+            // Verify palette mark?
+            if (palette.Data[4] != 16) _logger.LogError($"{palette.Filename} is not a valid palette file");
 
-            if (buffer[..KissHeader.Length].SequenceEqual(KissHeader))
-            {
-                // Verify palette mark?
-                if (buffer[4] != 16) _logger.LogError($"{palette.FileName} is not a valid palette file");
+            var colorDepth = Convert.ToInt32(palette.Data[5]);
+            colorsPerGroup = BitConverter.ToInt16(palette.Data, 8);
+            groups = BitConverter.ToInt16(palette.Data, 10);
 
-                var colorDepth = Convert.ToInt32(buffer[5]);
-                var colorsPerGroup = BitConverter.ToInt16(buffer, 8);
-                var groups = BitConverter.ToInt16(buffer, 10);
-
-                palette.Colors = GetColors(buffer[32..], colorDepth, colorsPerGroup, groups);
-            }
-            else
-            {
-                palette.Colors = GetColors(buffer);
-            }
+            return GetColors(palette.Data[32..], colorDepth, colorsPerGroup, groups);
         }
 
         public void ParseCel(string directory, CelModel cel, IEnumerable<PaletteModel> palettes)

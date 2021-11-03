@@ -1,4 +1,3 @@
-using Dapper;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -58,8 +57,6 @@ namespace fxl.codes.kisekae
                     "default",
                     "{controller=Home}/{action=Index}/{id?}/{configId?}");
             });
-
-            DefaultTypeMap.MatchNamesWithUnderscores = true;
         }
     }
 }

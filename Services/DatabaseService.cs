@@ -9,8 +9,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
-using Dapper.Contrib.Extensions;
 using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -61,7 +61,7 @@ namespace fxl.codes.kisekae.Services
             await connection.OpenAsync();
 
             var queryParams = new { Id = id, ConfigId = configId };
-            var cels = connection.Query<CelConfigDto>("select * from cel_config where configId = @ConfigId", queryParams);
+            var cels = connection.Query<CelConfigDto>("select * from cel_config where config_id = @ConfigId", queryParams);
             if (cels == null)
             {
                 var config = connection.QuerySingle<ConfigurationDto>(
@@ -99,28 +99,58 @@ namespace fxl.codes.kisekae.Services
 
         public async void StoreToDatabase(IFormFile file)
         {
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
             var memoryStream = await GetAsMemoryStream(file);
             var checksum = Convert.ToBase64String(await new SHA256Managed().ComputeHashAsync(memoryStream));
             memoryStream.Position = 0; // Reset for re-read
 
-            var existing = GetExisting(connection, file.FileName, checksum);
-            if (existing != null) return;
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var transaction = await connection.BeginTransactionAsync();
 
-            _fileParserService.UnzipLzh(file, memoryStream);
-            var directory = Path.GetFileNameWithoutExtension(file.FileName);
-            var kisekae = new KisekaeDto
+            try
             {
-                Filename = file.FileName,
-                Name = directory,
-                Checksum = checksum
-            };
+                var existing = GetExisting(connection, file.FileName, checksum);
+                if (existing != null) return;
 
-            kisekae.Id = await connection.InsertAsync(kisekae);
+                _fileParserService.UnzipLzh(file, memoryStream);
+                var directory = Path.GetFileNameWithoutExtension(file.FileName);
+                var kisekae = new KisekaeDto
+                {
+                    Filename = file.FileName,
+                    Name = directory,
+                    Checksum = checksum
+                };
 
-            var filenames = _storage.GetFileNames($"{Path.Combine(directory, "*")}");
-            SetInnerFiles(directory, filenames, kisekae.Id);
+                kisekae.Id = await connection.InsertAsync(kisekae);
+
+                var filenames = _storage.GetFileNames($"{Path.Combine(directory, "*")}");
+                await SetInnerFiles(connection, directory, filenames, kisekae.Id);
+
+                using var saved = await connection.QueryMultipleAsync(
+                    "select * from configuration where kisekae_id = @id; select * from cel where kisekae_id = @id; select * from palette where kisekae_id = @id",
+                    new { id = kisekae.Id });
+                var configs = saved.Read<ConfigurationDto>().ToList();
+                var cels = saved.Read<CelDto>().ToDictionary(x => x.Filename.ToLowerInvariant());
+                var palettes = saved.Read<PaletteDto>().ToDictionary(x => x.Filename.ToLowerInvariant());
+
+                foreach (var config in configs)
+                {
+                    _configurationReaderService.ReadConfigurationToDto(config, cels, palettes);
+                    await connection.InsertAsync<CelConfigDto>(config.Cels);
+                    await connection.UpdateAsync<PaletteDto>(config.Palettes);
+                    await connection.UpdateAsync(config);
+                }
+
+                var paletteColors = SetPaletteColors(palettes.Values);
+                await connection.InsertAsync<PaletteColorDto>(paletteColors);
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(e, $"Error saving file {file.FileName}");
+            }
 
             await connection.CloseAsync();
         }
@@ -141,7 +171,7 @@ namespace fxl.codes.kisekae.Services
             return existing;
         }
 
-        private async void SetInnerFiles(string directory, IEnumerable<string> filenames, int id)
+        private async Task SetInnerFiles(IDbConnection connection, string directory, IEnumerable<string> filenames, int id)
         {
             var files = new List<IKisekaeFile>();
             foreach (var filename in filenames)
@@ -181,14 +211,32 @@ namespace fxl.codes.kisekae.Services
                 }
             }
 
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
             await connection.InsertAsync(files.OfType<CelDto>());
             await connection.InsertAsync(files.OfType<ConfigurationDto>());
             await connection.InsertAsync(files.OfType<PaletteDto>());
+        }
 
-            await connection.CloseAsync();
+        private List<PaletteColorDto> SetPaletteColors(IEnumerable<PaletteDto> palettes)
+        {
+            var paletteColors = new List<PaletteColorDto>();
+            foreach (var palette in palettes)
+            {
+                var colors = _fileParserService.ParsePalette(palette, out var groups, out var colorsPerGroup);
+
+                for (var groupIndex = 0; groupIndex < groups; groupIndex++)
+                for (var colorIndex = 0; colorIndex < colorsPerGroup; colorIndex++)
+                {
+                    var color = colors[groupIndex * colorsPerGroup + colorIndex];
+                    paletteColors.Add(new PaletteColorDto
+                    {
+                        Group = groupIndex,
+                        PaletteId = palette.Id,
+                        Hex = color.ToHex()
+                    });
+                }
+            }
+
+            return paletteColors;
         }
 
         private static async Task<MemoryStream> GetAsMemoryStream(IFormFile file)

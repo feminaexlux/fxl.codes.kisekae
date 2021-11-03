@@ -5,6 +5,7 @@ namespace fxl.codes.kisekae.Entities
     [Flags]
     public enum Set
     {
+        Unset = -1,
         Zero = 2 ^ 0,
         One = 2 ^ 1,
         Two = 2 ^ 2,

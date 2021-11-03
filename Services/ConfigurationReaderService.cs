@@ -1,8 +1,9 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using fxl.codes.kisekae.Entities;
 using fxl.codes.kisekae.Models;
 using Microsoft.Extensions.Logging;
 
@@ -10,91 +11,129 @@ namespace fxl.codes.kisekae.Services
 {
     public class ConfigurationReaderService
     {
-        public const string ResolutionRegexPattern = @"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)";
-        private readonly FileParserService _fileParser;
+        private const string CelRegex = @"#(?<Group>\d*)\.?(?<Fix>\d*)\s*(?<FileName>[\w\d\-]*\.[cCeElL]*)\s*\*?"
+                                        + @"(?<PaletteId>\d*)?\s*\:?(?<Sets>[\d\s]*)?;?(?<Comment>[\w\d\-\s\%]*)";
+
+        private const string ResolutionRegexPattern = @"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)";
+
         private readonly ILogger<ConfigurationReaderService> _logger;
 
-        public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger, FileParserService fileParser)
+        public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger)
         {
             _logger = logger;
-            _fileParser = fileParser;
         }
 
-        public PlaysetModel ParseStream(Stream fileStream, string directory = null)
+        public void ReadConfigurationToDto(ConfigurationDto dto, IDictionary<string, CelDto> cels, IDictionary<string, PaletteDto> palettes)
         {
-            var model = new PlaysetModel();
             var initialPositions = new StringBuilder();
-            var borderColorIndex = 0;
 
-            using var reader = new StreamReader(fileStream);
-            var data = reader.ReadToEnd();
-            
-            SetPlaysetProperties(data, model, initialPositions);
-
-            SetInitialPositions(model, initialPositions.ToString());
-            if (string.IsNullOrEmpty(directory)) return model;
-
-            foreach (var palette in model.Palettes) _fileParser.ParsePalette(directory, palette);
-
-            var celIndex = 0;
-            foreach (var cel in model.Cels.Where(x => !string.IsNullOrEmpty(x.FileName)))
-            {
-                _fileParser.ParseCel(directory, cel, model.Palettes);
-                cel.ZIndex = (model.Cels.Count - celIndex) * 10;
-                celIndex++;
-            }
-
-            if (model.Palettes.Any() && model.Palettes[0].Colors.Any()) model.BorderColor = model.Palettes[0].Colors[borderColorIndex];
-
-            return model;
-        }
-
-        public void SetPlaysetProperties(string data, PlaysetModel model, StringBuilder initialPositions)
-        {
-            if (string.IsNullOrEmpty(data)) return;
-
-            foreach (var line in data.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
-            {
+            foreach (var line in dto.Data.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
                 switch (line.ToCharArray()[0])
                 {
                     case '(':
                         var resolutionRegex = new Regex(ResolutionRegexPattern);
                         var resolutionMatch = resolutionRegex.Match(line);
-                        model.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
-                        model.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
+                        dto.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
+                        dto.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
                         break;
                     case '[':
                         var borderValue = line[1..];
                         if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
-                        model.BorderColorIndex = int.Parse(borderValue);
+                        dto.BorderIndex = int.Parse(borderValue);
                         break;
                     case '%':
-                        model.Palettes.Add(new PaletteModel(_logger, line));
+                        dto.Palettes.Add(SetPalette(line, palettes));
                         break;
                     case '#':
-                        model.Cels.Add(new CelModel(_logger, line));
+                        dto.Cels.Add(SetCel(line, dto, cels));
                         break;
                     case '$':
                     case ' ':
                         initialPositions.Append(line.Replace("\\r\\n", "").Replace("\\n", ""));
                         break;
                 }
-            }
+
+            SetInitialPositions(dto, initialPositions.ToString());
         }
 
-        private static void SetInitialPositions(PlaysetModel model, string positions)
+        private CelConfigDto SetCel(string line, IKisekaeFile configuration, IDictionary<string, CelDto> cels)
+        {
+            var cel = new CelConfigDto
+            {
+                ConfigId = configuration.Id
+            };
+
+            if (line.Contains("%t"))
+            {
+                var opacity = line[line.IndexOf("%t", StringComparison.InvariantCultureIgnoreCase)..].Trim();
+                opacity = opacity.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)[0];
+                opacity = opacity.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)[0];
+                opacity = opacity.Replace("%t", "");
+                cel.Transparency = int.Parse(opacity);
+            }
+
+            var matcher = new Regex(CelRegex);
+            var match = matcher.Match(line);
+
+            foreach (var groupName in matcher.GetGroupNames())
+            {
+                match.Groups.TryGetValue(groupName, out var group);
+                if (string.IsNullOrEmpty(group?.Value)) continue;
+                
+                if (string.Equals(groupName, "FileName"))
+                {
+                    cel.CelId = cels[group.Value.ToLowerInvariant()].Id;
+                    continue;
+                }
+
+                var property = typeof(CelConfigDto).GetProperty(groupName);
+                if (property == null) continue;
+
+                var value = group.Value.Trim();
+                if (property.PropertyType == typeof(string)) property.SetValue(cel, value);
+                if (property.PropertyType == typeof(int)) property.SetValue(cel, int.Parse(value));
+
+                if (property.PropertyType != cel.Sets.GetType()) continue;
+
+                foreach (var id in value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var success = int.TryParse(id, out var result);
+                    if (!success) continue;
+
+                    if (cel.Sets == Set.Unset)
+                        cel.Sets = (Set)(2 ^ result);
+                    else
+                        cel.Sets |= (Set)(2 ^ result);
+                }
+            }
+
+            return cel;
+        }
+
+        private static PaletteDto SetPalette(string line, IDictionary<string, PaletteDto> palettes)
+        {
+            var parts = line.Split(';');
+            var palette = palettes[parts[0].Trim().ToLowerInvariant().Replace("%", "")];
+            if (parts.Length > 1) palette.Comment = parts[1].Trim();
+            return palette;
+        }
+
+        private static void SetInitialPositions(ConfigurationDto dto, string positions)
         {
             var sets = positions.Split('$', StringSplitOptions.RemoveEmptyEntries);
-            for (var index = 0; index < sets.Length; index++)
+            foreach (var set in sets)
             {
-                var value = sets[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var value = set.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 for (var innerIndex = 1; innerIndex < value.Length; innerIndex++)
                 {
                     if (value[innerIndex] == "*") continue;
                     var point = value[innerIndex].Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                    foreach (var cel in model.Cels.Where(x => x.Id == innerIndex - 1))
-                        cel.InitialPositions[index] = new Coordinate(int.Parse(point[0]), int.Parse(point[1]));
+                    foreach (var cel in dto.Cels.Where(x => x.Id == innerIndex - 1))
+                    {
+                        cel.X = int.Parse(point[0]);
+                        cel.Y = int.Parse(point[1]);
+                    }
                 }
             }
         }

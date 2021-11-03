@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Threading.Tasks;
 using fxl.codes.kisekae.Models;
@@ -16,16 +14,11 @@ namespace fxl.codes.kisekae.Controllers
     {
         private readonly DatabaseService _databaseService;
         private readonly ILogger<HomeController> _logger;
-        private readonly ConfigurationReaderService _readerService;
-        private readonly IsolatedStorageFile _storage;
 
-        public HomeController(ILogger<HomeController> logger, ConfigurationReaderService readerService, DatabaseService databaseService)
+        public HomeController(ILogger<HomeController> logger, DatabaseService databaseService)
         {
             _logger = logger;
-            _readerService = readerService;
             _databaseService = databaseService;
-
-            _storage = IsolatedStorageFile.GetUserStoreForApplication();
         }
 
         [HttpGet]
@@ -45,15 +38,6 @@ namespace fxl.codes.kisekae.Controllers
             _databaseService.StoreToDatabase(file);
 
             return Redirect("/");
-        }
-
-        [HttpPost]
-        public IActionResult Select(string directory, string file)
-        {
-            var stream = _storage.OpenFile(Path.Combine(directory, file), FileMode.Open);
-            var model = _readerService.ParseStream(stream, directory);
-            model.Name = file;
-            return View("Play", model);
         }
 
         public IActionResult Privacy()
