@@ -6,8 +6,6 @@ module.exports = [{
         style: "./Styles/main.scss"
     },
     output: {
-        // This is necessary for webpack to compile
-        // But we never use style-bundle.js
         filename: 'js/[name].js',
         path: path.resolve(__dirname, 'wwwroot'),
     },
@@ -27,7 +25,14 @@ module.exports = [{
                         },
                     },
                     {loader: 'extract-loader'},
-                    {loader: 'css-loader'},
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            // What the **fuck**
+                            // https://github.com/peerigon/extract-loader/issues/111#issuecomment-948791524
+                            esModule: false
+                        }
+                    },
                     {
                         loader: 'sass-loader',
                         options: {
@@ -38,18 +43,15 @@ module.exports = [{
                             webpackImporter: false,
                             sassOptions: {
                                 includePaths: ['./node_modules'],
-                                sourceMap: true
                             },
-                            sourceMap: true
                         },
-                    },
-                ]
+                    }
+                ],
             },
             {test: /\.tsx?$/, loader: "ts-loader"}
-        ]
+        ],
     },
     stats: {
-        // Display bailout reasons
-        optimizationBailout: true,
-    },
-}];
+        errorDetails: true
+    }
+}]

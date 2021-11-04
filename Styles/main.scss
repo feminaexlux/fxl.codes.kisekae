@@ -9,6 +9,7 @@ $fxl-orange: #ff6e40;
 @use "@material/button/styles";
 @use "@material/button/mixins" as button-mixins;
 @use "@material/icon-button/icon-button";
+@use "@material/linear-progress";
 @use "@material/top-app-bar/mdc-top-app-bar";
 @use "@material/typography/mdc-typography";
 
@@ -25,6 +26,8 @@ body {
   flex-direction: column;
 
   main {
+    @include linear-progress.core-styles;
+    
     display: flex;
     flex: 1;
     flex-direction: column;

@@ -21,27 +21,5 @@
 
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\css\main.css" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\appsettings.Development.json" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\appsettings.json" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\obj\LHADecompressor.csproj.nuget.dgspec.json" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\obj\project.assets.json" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\obj\project.packagespec.json" />
-      <_ContentIncludedByDefault Remove="LHADecompressor\Properties\launchSettings.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="LHADecompressor\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove="LHADecompressor\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="LHADecompressor\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Remove="LHADecompressor\**" />
     </ItemGroup>
 </Project>
