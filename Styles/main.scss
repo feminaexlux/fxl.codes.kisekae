@@ -6,8 +6,9 @@ $fxl-orange: #ff6e40;
   $on-primary: $fxl-gray
 );
 
-@use "@material/button/styles";
+@use "@material/button/styles" as button-styles;
 @use "@material/button/mixins" as button-mixins;
+@use "@material/chips/styles" as chip-styles;
 @use "@material/icon-button/icon-button";
 @use "@material/linear-progress";
 @use "@material/top-app-bar/mdc-top-app-bar";
@@ -31,6 +32,7 @@ body {
     display: flex;
     flex: 1;
     flex-direction: column;
+    padding: 1rem;
 
     header {
       ul {
@@ -64,6 +66,22 @@ body {
           visibility: hidden;
           position: absolute;
         }
+      }
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      height: 1px;
+      width: 1px;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      
+      &:focus + label {
+        outline: thin dotted;
+      }
+      
+      &:focus-within + label {
+        outline: thin dotted;
       }
     }
   }

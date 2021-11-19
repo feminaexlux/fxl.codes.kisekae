@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,9 +13,11 @@ namespace fxl.codes.kisekae.Controllers
             _databaseService = databaseService;
         }
 
-        public IActionResult Index(int id, int configId)
+        public async Task<IActionResult> Index(int id)
         {
-            return View();
+            var model = await _databaseService.LoadConfig(id);
+            
+            return View(model);
         }
     }
 }

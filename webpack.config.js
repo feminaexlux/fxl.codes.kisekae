@@ -2,8 +2,8 @@ const path = require('path');
 
 module.exports = [{
     entry: {
-        main: "./Scripts/main.ts",
-        style: "./Styles/main.scss"
+        main: ["./Scripts/main.ts", "./Styles/main.scss"],
+        uploader: "./Scripts/upload.ts",
     },
     output: {
         filename: 'js/[name].js',

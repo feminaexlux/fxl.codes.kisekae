@@ -4,15 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using fxl.codes.kisekae.Entities;
-using fxl.codes.kisekae.Models;
 using Microsoft.Extensions.Logging;
 
 namespace fxl.codes.kisekae.Services
 {
     public class ConfigurationReaderService
     {
-        private const string CelRegex = @"#(?<Group>\d*)\.?(?<Fix>\d*)\s*(?<FileName>[\w\d\-]*\.[cCeElL]*)\s*\*?"
-                                        + @"(?<PaletteId>\d*)?\s*\:?(?<Sets>[\d\s]*)?;?(?<Comment>[\w\d\-\s\%]*)";
+        private const string CelRegex = @"#(?<Mark>\d*)\.?(?<Fix>\d*)\s*(?<FileName>[\w\d\-]*\.[cCeElL]*)\s*\*?"
+                                        + @"(?<PaletteIndex>\d*)?\s*\:?(?<Sets>[\d\s]*)?;?(?<Comment>[\w\d\-\s\%]*)";
 
         private const string ResolutionRegexPattern = @"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)";
 
@@ -79,7 +78,7 @@ namespace fxl.codes.kisekae.Services
             {
                 match.Groups.TryGetValue(groupName, out var group);
                 if (string.IsNullOrEmpty(group?.Value)) continue;
-                
+
                 if (string.Equals(groupName, "FileName"))
                 {
                     cel.CelId = cels[group.Value.ToLowerInvariant()].Id;
@@ -124,13 +123,16 @@ namespace fxl.codes.kisekae.Services
             foreach (var set in sets)
             {
                 var value = set.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var paletteGroup = int.Parse(value[0]);
+
                 for (var innerIndex = 1; innerIndex < value.Length; innerIndex++)
                 {
                     if (value[innerIndex] == "*") continue;
                     var point = value[innerIndex].Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                    foreach (var cel in dto.Cels.Where(x => x.Id == innerIndex - 1))
+                    foreach (var cel in dto.Cels.Where(x => x.Mark == innerIndex - 1))
                     {
+                        cel.PaletteGroup = paletteGroup;
                         cel.X = int.Parse(point[0]);
                         cel.Y = int.Parse(point[1]);
                     }

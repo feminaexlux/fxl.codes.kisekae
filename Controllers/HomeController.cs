@@ -21,7 +21,6 @@ namespace fxl.codes.kisekae.Controllers
             _databaseService = databaseService;
         }
 
-        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var files = await _databaseService.GetAll();
@@ -37,9 +36,9 @@ namespace fxl.codes.kisekae.Controllers
 
             _databaseService.StoreToDatabase(file);
 
-            return Redirect("/");
+            return View();
         }
-
+        
         public IActionResult Privacy()
         {
             return View();

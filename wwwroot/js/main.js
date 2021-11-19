@@ -190,13 +190,23 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 
 /***/ }),
 
+/***/ "./Styles/main.scss":
+/*!**************************!*\
+  !*** ./Styles/main.scss ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (__webpack_require__.p + \"css/main.css\");\n\n//# sourceURL=webpack://fxl.codes.kisekae/./Styles/main.scss?");
+
+/***/ }),
+
 /***/ "./Scripts/main.ts":
 /*!*************************!*\
   !*** ./Scripts/main.ts ***!
   \*************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _material_linear_progress__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @material/linear-progress */ \"./node_modules/@material/linear-progress/component.js\");\n/* harmony import */ var _material_ripple__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @material/ripple */ \"./node_modules/@material/ripple/component.js\");\n/* harmony import */ var _material_top_app_bar__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @material/top-app-bar */ \"./node_modules/@material/top-app-bar/component.js\");\n/* harmony import */ var _tracker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tracker */ \"./Scripts/tracker.ts\");\n/* harmony import */ var _utility__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utility */ \"./Scripts/utility.ts\");\n\n\n\n\n\nvar Main = (function () {\n    function Main() {\n        var _this = this;\n        this.ripples = [];\n        this.appBar = _material_top_app_bar__WEBPACK_IMPORTED_MODULE_2__.MDCTopAppBar.attachTo(document.querySelector(\".mdc-top-app-bar\"));\n        document.querySelectorAll(\".mdc-button\").forEach(function (button) {\n            _this.ripples.push(_material_ripple__WEBPACK_IMPORTED_MODULE_3__.MDCRipple.attachTo(button));\n        });\n        this.linearProgress = _material_linear_progress__WEBPACK_IMPORTED_MODULE_4__.MDCLinearProgress.attachTo(document.querySelector(\".mdc-linear-progress\"));\n        this.init();\n    }\n    Main.prototype.load = function (containerId, headerId, playset, set) {\n        if (set === void 0) { set = 0; }\n        var container = document.getElementById(containerId);\n        var menu = document.getElementById(headerId).querySelector(\"ul\");\n        var tracker = new _tracker__WEBPACK_IMPORTED_MODULE_0__[\"default\"](playset, menu, container);\n        tracker.setPlayArea(set);\n    };\n    Main.prototype.init = function () {\n        var _this = this;\n        this.linearProgress.open();\n        var main = document.querySelector(\"main\");\n        var directories = main.querySelector(\"ul\");\n        if (!directories)\n            return;\n        var links = directories.querySelectorAll(\"a\");\n        links.forEach(function (link) {\n            link.addEventListener(\"click\", function () {\n                _this.linearProgress.determinate = false;\n                _this.linearProgress.open();\n                var directory = link.attributes.getNamedItem(\"data-directory\");\n                var form = new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"form\")\n                    .addAttributes({ \"method\": \"post\", \"action\": \"/Home/Select\" })\n                    .addChildren(new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"input\").addAttributes({\n                    \"type\": \"hidden\",\n                    \"name\": \"directory\",\n                    \"value\": directory.value\n                }), new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"input\").addAttributes({\n                    \"type\": \"hidden\",\n                    \"name\": \"file\",\n                    \"value\": link.textContent\n                })).build();\n                link.appendChild(form);\n                form.submit();\n            });\n        });\n    };\n    return Main;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Main);\ndocument.kisekae = new Main();\n\n\n//# sourceURL=webpack://fxl.codes.kisekae/./Scripts/main.ts?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _material_linear_progress__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @material/linear-progress */ \"./node_modules/@material/linear-progress/component.js\");\n/* harmony import */ var _material_ripple__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @material/ripple */ \"./node_modules/@material/ripple/component.js\");\n/* harmony import */ var _material_top_app_bar__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @material/top-app-bar */ \"./node_modules/@material/top-app-bar/component.js\");\n/* harmony import */ var _tracker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tracker */ \"./Scripts/tracker.ts\");\n/* harmony import */ var _utility__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utility */ \"./Scripts/utility.ts\");\n\n\n\n\n\nvar Main = (function () {\n    function Main() {\n        var _this = this;\n        this.ripples = [];\n        this.appBar = _material_top_app_bar__WEBPACK_IMPORTED_MODULE_2__.MDCTopAppBar.attachTo(document.querySelector(\".mdc-top-app-bar\"));\n        document.querySelectorAll(\".mdc-button\").forEach(function (button) {\n            _this.ripples.push(_material_ripple__WEBPACK_IMPORTED_MODULE_3__.MDCRipple.attachTo(button));\n        });\n        this.linearProgress = _material_linear_progress__WEBPACK_IMPORTED_MODULE_4__.MDCLinearProgress.attachTo(document.querySelector(\".mdc-linear-progress\"));\n        this.init();\n    }\n    Main.prototype.load = function (containerId, headerId, playset, set) {\n        if (set === void 0) { set = 0; }\n        var container = document.getElementById(containerId);\n        var menu = document.getElementById(headerId).querySelector(\"ul\");\n        var tracker = new _tracker__WEBPACK_IMPORTED_MODULE_0__[\"default\"](playset, menu, container);\n        tracker.setPlayArea(set);\n    };\n    Main.prototype.init = function () {\n        var _this = this;\n        var main = document.querySelector(\"main\");\n        var directories = main.querySelector(\"ul\");\n        if (!directories)\n            return;\n        var links = directories.querySelectorAll(\"a\");\n        links.forEach(function (link) {\n            link.addEventListener(\"click\", function () {\n                _this.linearProgress.determinate = false;\n                _this.linearProgress.open();\n                var directory = link.attributes.getNamedItem(\"data-directory\");\n                var form = new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"form\")\n                    .addAttributes({ \"method\": \"post\", \"action\": \"/Home/Select\" })\n                    .addChildren(new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"input\").addAttributes({\n                    \"type\": \"hidden\",\n                    \"name\": \"directory\",\n                    \"value\": directory.value\n                }), new _utility__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\"input\").addAttributes({\n                    \"type\": \"hidden\",\n                    \"name\": \"file\",\n                    \"value\": link.textContent\n                })).build();\n                link.appendChild(form);\n                form.submit();\n            });\n        });\n    };\n    return Main;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Main);\ndocument.kisekae = new Main();\n\n\n//# sourceURL=webpack://fxl.codes.kisekae/./Scripts/main.ts?");
 
 /***/ }),
 
@@ -226,7 +236,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
   \****************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nvar Builder = (function () {\n    function Builder(tag) {\n        this.element = document.createElement(tag);\n    }\n    Builder.prototype.addAttributes = function (attributes) {\n        for (var _i = 0, _a = Object.keys(attributes); _i < _a.length; _i++) {\n            var key = _a[_i];\n            this.addAttribute(key, attributes[key]);\n        }\n        return this;\n    };\n    Builder.prototype.addAttribute = function (name, value) {\n        var attribute = document.createAttribute(name);\n        attribute.value = value.toString();\n        this.element.attributes.setNamedItem(attribute);\n        return this;\n    };\n    Builder.prototype.addClass = function () {\n        var _a;\n        var classes = [];\n        for (var _i = 0; _i < arguments.length; _i++) {\n            classes[_i] = arguments[_i];\n        }\n        (_a = this.element.classList).add.apply(_a, classes);\n        return this;\n    };\n    Builder.prototype.addChildren = function () {\n        var _this = this;\n        var children = [];\n        for (var _i = 0; _i < arguments.length; _i++) {\n            children[_i] = arguments[_i];\n        }\n        children.forEach(function (child) {\n            if (child instanceof HTMLElement) {\n                _this.element.appendChild(child);\n            }\n            else {\n                _this.element.appendChild(child.build());\n            }\n        });\n        return this;\n    };\n    Builder.prototype.setText = function (text) {\n        this.element.textContent = text;\n        return this;\n    };\n    Builder.prototype.build = function () {\n        return this.element;\n    };\n    return Builder;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Builder);\n\n\n//# sourceURL=webpack://fxl.codes.kisekae/./Scripts/utility.ts?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nvar Builder = (function () {\n    function Builder(tag) {\n        this.element = document.createElement(tag);\n    }\n    Builder.prototype.addAttributes = function (attributes) {\n        for (var _i = 0, _a = Object.keys(attributes); _i < _a.length; _i++) {\n            var key = _a[_i];\n            this.addAttribute(key, attributes[key]);\n        }\n        return this;\n    };\n    Builder.prototype.addAttribute = function (name, value) {\n        var attribute = document.createAttribute(name);\n        attribute.value = value.toString();\n        this.element.attributes.setNamedItem(attribute);\n        return this;\n    };\n    Builder.prototype.addClass = function () {\n        var _a;\n        var classes = [];\n        for (var _i = 0; _i < arguments.length; _i++) {\n            classes[_i] = arguments[_i];\n        }\n        (_a = this.element.classList).add.apply(_a, classes);\n        return this;\n    };\n    Builder.prototype.addChildren = function () {\n        var _this = this;\n        var children = [];\n        for (var _i = 0; _i < arguments.length; _i++) {\n            children[_i] = arguments[_i];\n        }\n        children.forEach(function (child) {\n            if (child instanceof HTMLElement) {\n                _this.element.appendChild(child);\n            }\n            else {\n                _this.element.appendChild(child.build());\n            }\n        });\n        return this;\n    };\n    Builder.prototype.setText = function (text) {\n        this.element.textContent = text;\n        return this;\n    };\n    Builder.prototype.build = function () {\n        return this.element;\n    };\n    Builder.element = function (tag, attributes) {\n        var _a;\n        var classes = [];\n        for (var _i = 2; _i < arguments.length; _i++) {\n            classes[_i - 2] = arguments[_i];\n        }\n        return (_a = new Builder(tag).addAttributes(attributes)).addClass.apply(_a, classes);\n    };\n    return Builder;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Builder);\n\n\n//# sourceURL=webpack://fxl.codes.kisekae/./Scripts/utility.ts?");
 
 /***/ }),
 
@@ -279,6 +289,18 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
@@ -295,12 +317,33 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	(() => {
+/******/ 		var scriptUrl;
+/******/ 		if (__webpack_require__.g.importScripts) scriptUrl = __webpack_require__.g.location + "";
+/******/ 		var document = __webpack_require__.g.document;
+/******/ 		if (!scriptUrl && document) {
+/******/ 			if (document.currentScript)
+/******/ 				scriptUrl = document.currentScript.src
+/******/ 			if (!scriptUrl) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				if(scripts.length) scriptUrl = scripts[scripts.length - 1].src
+/******/ 			}
+/******/ 		}
+/******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
+/******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
+/******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
+/******/ 		scriptUrl = scriptUrl.replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		__webpack_require__.p = scriptUrl + "../";
+/******/ 	})();
+/******/ 	
 /************************************************************************/
 /******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module can't be inlined because the eval devtool is used.
-/******/ 	var __webpack_exports__ = __webpack_require__("./Scripts/main.ts");
+/******/ 	__webpack_require__("./Scripts/main.ts");
+/******/ 	var __webpack_exports__ = __webpack_require__("./Styles/main.scss");
 /******/ 	
 /******/ })()
 ;

@@ -9,6 +9,7 @@
       <TypeScriptCompile Include="Scripts\main.ts" />
       <TypeScriptCompile Include="Scripts\pto.ts" />
       <TypeScriptCompile Include="Scripts\tracker.ts" />
+      <TypeScriptCompile Include="Scripts\upload.ts" />
       <TypeScriptCompile Include="Scripts\utility.ts" />
     </ItemGroup>
 

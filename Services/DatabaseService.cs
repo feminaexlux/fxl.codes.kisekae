@@ -6,11 +6,11 @@ using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using fxl.codes.kisekae.Entities;
 using fxl.codes.kisekae.Extensions;
+using fxl.codes.kisekae.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -53,48 +53,6 @@ namespace fxl.codes.kisekae.Services
 
             foreach (var kiss in files) kiss.Configurations = dictionary[kiss.Id];
             return files;
-        }
-
-        public async void GetKisekaeConfig(int id, int configId)
-        {
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var queryParams = new { Id = id, ConfigId = configId };
-            var cels = connection.Query<CelConfigDto>("select * from cel_config where config_id = @ConfigId", queryParams);
-            if (cels == null)
-            {
-                var config = connection.QuerySingle<ConfigurationDto>(
-                    "select * from configuration where kisekae_id = @Id and id = @ConfigId",
-                    queryParams);
-
-                foreach (var line in config.Data.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
-                    switch (line.ToCharArray()[0])
-                    {
-                        case '(':
-                            var resolutionRegex = new Regex(ResolutionRegexPattern);
-                            var resolutionMatch = resolutionRegex.Match(line);
-                            config.Width = int.Parse(resolutionMatch.Groups["Width"].Value);
-                            config.Height = int.Parse(resolutionMatch.Groups["Height"].Value);
-                            break;
-                        case '[':
-                            var borderValue = line[1..];
-                            if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
-                            config.BorderIndex = int.Parse(borderValue);
-                            break;
-                        case '%':
-                            break;
-                        case '#':
-                            break;
-                        case '$':
-                        case ' ':
-                            break;
-                    }
-
-                await connection.UpdateAsync(config);
-            }
-
-            await connection.CloseAsync();
         }
 
         public async void StoreToDatabase(IFormFile file)
@@ -153,6 +111,30 @@ namespace fxl.codes.kisekae.Services
             }
 
             await connection.CloseAsync();
+        }
+
+        public async Task<PlaysetModel> LoadConfig(int configId)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var config = await connection.QuerySingleAsync<ConfigurationDto>("select * from configuration where id = @configId", new { configId });
+
+            var celIds = await connection.QueryAsync<int>("select cel_id from cel_config where config_id = @configId", new { configId });
+            var renders = await connection.QueryAsync<CelRenderDto>($"select * from cel_render where cel_id in ({string.Join(",", celIds)})");
+            if (!renders.Any())
+            {
+                using var reader = await connection.QueryMultipleAsync($"select * from cel where id in ({string.Join(",", celIds)});"
+                                                                       + "select * from palette where kisekae_id = @kisekaeId", new { kisekaeId = config.KisekaeId });
+
+                var cels = reader.Read<CelDto>();
+                var palettes = reader.Read<PaletteDto>().ToDictionary(x => x.Id);
+                
+                
+            }
+            
+            await connection.CloseAsync();
+            return null;
         }
 
         private KisekaeDto GetExisting(IDbConnection connection, string filename, string checksum)

@@ -1,3 +1,4 @@
+using Dapper;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,7 +35,7 @@ namespace fxl.codes.kisekae
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                NpgsqlLogManager.Provider = new ConsoleLoggingProvider();
+                NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug);
                 NpgsqlLogManager.IsParameterLoggingEnabled = true;
             }
             else
@@ -55,8 +56,10 @@ namespace fxl.codes.kisekae
             {
                 endpoints.MapControllerRoute(
                     "default",
-                    "{controller=Home}/{action=Index}/{id?}/{configId?}");
+                    "{controller=Home}/{action=Index}/{id?}");
             });
+
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
         }
     }
 }

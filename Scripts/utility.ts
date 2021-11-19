@@ -46,4 +46,8 @@ export default class Builder {
     build(): HTMLElement {
         return this.element
     }
+    
+    static element(tag: string, attributes: { [key: string]: string | number }, ...classes: string[]): Builder {
+        return new Builder(tag).addAttributes(attributes).addClass(...classes)
+    }
 }

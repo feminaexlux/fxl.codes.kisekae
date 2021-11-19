@@ -37,8 +37,6 @@ export default class Main {
     }
 
     private init() {
-        this.linearProgress.open()
-
         let main = document.querySelector("main")
         let directories = main.querySelector("ul")
 
