@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using fxl.codes.kisekae.Models;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Http;
@@ -21,10 +20,10 @@ namespace fxl.codes.kisekae.Controllers
             _databaseService = databaseService;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var files = await _databaseService.GetAll();
-            return View(files.Select(x => new ConfigurationModel(x)));
+            var files = _databaseService.GetAll();
+            return View(files.Select(x => new KisekaeModel(x)));
         }
 
         [HttpPost]

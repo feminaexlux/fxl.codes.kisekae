@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using fxl.codes.kisekae.Models;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +13,11 @@ namespace fxl.codes.kisekae.Controllers
             _databaseService = databaseService;
         }
 
-        public async Task<IActionResult> Index(int id)
+        public IActionResult Index(int id)
         {
-            var model = await _databaseService.LoadConfig(id);
-            
-            return View(model);
+            var config = _databaseService.GetConfig(id);
+
+            return View(new PlaysetModel(config));
         }
     }
 }

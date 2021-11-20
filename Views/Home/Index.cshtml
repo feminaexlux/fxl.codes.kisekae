@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ConfigurationModel>
+﻿@model IEnumerable<KisekaeModel>
 
 @{
     ViewData["Title"] = "Select";
@@ -32,7 +32,7 @@
                 @foreach (var (key, value) in kiss.Configurations)
                 {
                     <li>
-                        <a asp-controller="Play" asp-action="Index" asp-route-id="@kiss.Id">@value</a>
+                        <a asp-controller="Play" asp-action="Index" asp-route-id="@key">@value</a>
                     </li>
                 }
             </ul>

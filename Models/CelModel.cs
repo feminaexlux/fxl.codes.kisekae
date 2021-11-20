@@ -1,25 +1,21 @@
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using System;
+using fxl.codes.kisekae.Entities;
 
 namespace fxl.codes.kisekae.Models
 {
     public class CelModel
     {
-        public Dictionary<int, string> ImageByPalette = new();
+        public readonly int Fix;
+        public readonly string Image;
+        public readonly int Mark;
+        public readonly int ZIndex;
 
-        public int Id { get; init; }
-        public int Fix { get; init; }
-        public string FileName { get; init; }
-        public int PaletteId { get; init; }
-        public bool[] Sets { get; } = new bool[10];
-        public string Comment { get; init; }
-        [JsonIgnore] public int Transparency { get; set; }
-        public double Opacity { get; internal set; } = 1.0;
-        public Coordinate[] InitialPositions { get; } = new Coordinate[10];
-        [JsonIgnore] public string DefaultImage => ImageByPalette.ContainsKey(PaletteId) ? ImageByPalette[PaletteId] : null;
-        public Coordinate Offset { get; set; }
-        [JsonIgnore] public int Height { get; internal set; }
-        [JsonIgnore] public int Width { get; internal set; }
-        [JsonIgnore] public int ZIndex { get; internal set; }
+        internal CelModel(CelConfig celConfig, Render render, int zIndex)
+        {
+            Mark = celConfig.Mark;
+            Fix = celConfig.Fix;
+            ZIndex = zIndex;
+            Image = Convert.ToBase64String(render.Image);
+        }
     }
 }

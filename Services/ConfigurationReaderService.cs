@@ -22,7 +22,7 @@ namespace fxl.codes.kisekae.Services
             _logger = logger;
         }
 
-        public void ReadConfigurationToDto(ConfigurationDto dto, IDictionary<string, CelDto> cels, IDictionary<string, PaletteDto> palettes)
+        public void ReadConfigurationToDto(Configuration dto, IDictionary<string, Cel> cels, IDictionary<string, Palette> palettes)
         {
             var initialPositions = new StringBuilder();
 
@@ -41,10 +41,10 @@ namespace fxl.codes.kisekae.Services
                         dto.BorderIndex = int.Parse(borderValue);
                         break;
                     case '%':
-                        dto.Palettes.Add(SetPalette(line, palettes));
+                        UpdatePalette(line, palettes);
                         break;
                     case '#':
-                        dto.Cels.Add(SetCel(line, dto, cels));
+                        dto.Cels.Add(SetCelConfig(line, dto, cels, palettes.Values.ToArray()));
                         break;
                     case '$':
                     case ' ':
@@ -55,11 +55,11 @@ namespace fxl.codes.kisekae.Services
             SetInitialPositions(dto, initialPositions.ToString());
         }
 
-        private CelConfigDto SetCel(string line, IKisekaeFile configuration, IDictionary<string, CelDto> cels)
+        private static CelConfig SetCelConfig(string line, Configuration configuration, IDictionary<string, Cel> cels, IReadOnlyList<Palette> palettes)
         {
-            var cel = new CelConfigDto
+            var cel = new CelConfig
             {
-                ConfigId = configuration.Id
+                Configuration = configuration
             };
 
             if (line.Contains("%t"))
@@ -81,11 +81,17 @@ namespace fxl.codes.kisekae.Services
 
                 if (string.Equals(groupName, "FileName"))
                 {
-                    cel.CelId = cels[group.Value.ToLowerInvariant()].Id;
+                    cel.Cel = cels[group.Value.ToLowerInvariant()];
                     continue;
                 }
 
-                var property = typeof(CelConfigDto).GetProperty(groupName);
+                if (string.Equals(groupName, "PaletteIndex"))
+                {
+                    cel.Palette = palettes[int.Parse(group.Value)];
+                    continue;
+                }
+
+                var property = typeof(CelConfig).GetProperty(groupName);
                 if (property == null) continue;
 
                 var value = group.Value.Trim();
@@ -106,18 +112,19 @@ namespace fxl.codes.kisekae.Services
                 }
             }
 
+            cel.Palette ??= palettes[0];
+
             return cel;
         }
 
-        private static PaletteDto SetPalette(string line, IDictionary<string, PaletteDto> palettes)
+        private static void UpdatePalette(string line, IDictionary<string, Palette> palettes)
         {
             var parts = line.Split(';');
             var palette = palettes[parts[0].Trim().ToLowerInvariant().Replace("%", "")];
             if (parts.Length > 1) palette.Comment = parts[1].Trim();
-            return palette;
         }
 
-        private static void SetInitialPositions(ConfigurationDto dto, string positions)
+        private static void SetInitialPositions(Configuration dto, string positions)
         {
             var sets = positions.Split('$', StringSplitOptions.RemoveEmptyEntries);
             foreach (var set in sets)

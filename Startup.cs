@@ -1,7 +1,7 @@
-using Dapper;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +23,8 @@ namespace fxl.codes.kisekae
         {
             services.AddControllersWithViews()
                 .AddRazorRuntimeCompilation();
+
+            services.AddDbContextFactory<KisekaeContext>(options => { options.UseNpgsql(Configuration.GetConnectionString("kisekae")); });
 
             services.AddSingleton<ConfigurationReaderService>();
             services.AddSingleton<FileParserService>();
@@ -58,8 +60,6 @@ namespace fxl.codes.kisekae
                     "default",
                     "{controller=Home}/{action=Index}/{id?}");
             });
-
-            DefaultTypeMap.MatchNamesWithUnderscores = true;
         }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-
 namespace fxl.codes.kisekae.Models
 {
     public class ErrorViewModel
