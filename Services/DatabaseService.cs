@@ -46,8 +46,9 @@ namespace fxl.codes.kisekae.Services
         {
             using var context = _contextFactory.CreateDbContext();
             return context.Configurations
-                .Include(x => x.Cels).ThenInclude(x => x.Cel)
+                .Include(x => x.Cels).ThenInclude(x => x.Render)
                 .Include(x => x.Kisekae).ThenInclude(x => x.Palettes).ThenInclude(x => x.Colors)
+                .AsSplitQuery()
                 .FirstOrDefault(x => x.Id == id);
         }
 
