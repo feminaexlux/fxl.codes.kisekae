@@ -37,7 +37,7 @@ namespace fxl.codes.kisekae
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug);
+                NpgsqlLogManager.Provider = new ConsoleLoggingProvider();
                 NpgsqlLogManager.IsParameterLoggingEnabled = true;
             }
             else

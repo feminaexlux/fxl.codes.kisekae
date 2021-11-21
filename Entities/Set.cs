@@ -5,16 +5,16 @@ namespace fxl.codes.kisekae.Entities
     [Flags]
     public enum Set
     {
-        Unset = -1,
-        Zero = 2 ^ 0,
-        One = 2 ^ 1,
-        Two = 2 ^ 2,
-        Three = 2 ^ 3,
-        Four = 2 ^ 4,
-        Five = 2 ^ 5,
-        Six = 2 ^ 6,
-        Seven = 2 ^ 7,
-        Eight = 2 ^ 8,
-        Nine = 2 ^ 9
+        None = 0,
+        Zero = 1 << 0,
+        One = 1 << 1,
+        Two = 1 << 2,
+        Three = 1 << 3,
+        Four = 1 << 4,
+        Five = 1 << 5,
+        Six = 1 << 6,
+        Seven = 1 << 7,
+        Eight = 1 << 8,
+        Nine = 1 << 9
     }
 }

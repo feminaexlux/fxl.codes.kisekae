@@ -10,6 +10,8 @@ using fxl.codes.kisekae.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
+using Configuration = fxl.codes.kisekae.Entities.Configuration;
 
 namespace fxl.codes.kisekae.Services
 {
@@ -47,6 +49,8 @@ namespace fxl.codes.kisekae.Services
             using var context = _contextFactory.CreateDbContext();
             return context.Configurations
                 .Include(x => x.Cels).ThenInclude(x => x.Render)
+                .Include(x => x.Cels).ThenInclude(x => x.Cel)
+                .Include(x => x.Cels).ThenInclude(x => x.Positions)
                 .Include(x => x.Kisekae).ThenInclude(x => x.Palettes).ThenInclude(x => x.Colors)
                 .AsSplitQuery()
                 .FirstOrDefault(x => x.Id == id);
@@ -55,7 +59,7 @@ namespace fxl.codes.kisekae.Services
         public async void StoreToDatabase(IFormFile file)
         {
             var memoryStream = await GetAsMemoryStream(file);
-            var checksum = Convert.ToBase64String(await SHA256.Create().ComputeHashAsync(memoryStream));
+            var checksum = Convert.ToBase64String(SHA256.Create().ComputeHash(memoryStream.GetBuffer()));
             memoryStream.Position = 0; // Reset for re-read
 
             await using var context = await _contextFactory.CreateDbContextAsync();
@@ -76,20 +80,24 @@ namespace fxl.codes.kisekae.Services
             var filenames = _storage.GetFileNames($"{Path.Combine(directory, "*")}");
             await SetInnerFiles(kisekae, directory, filenames);
 
+            var backgroundColors = new Dictionary<Configuration, int>();
             foreach (var config in kisekae.Configurations)
-                _configurationReaderService.ReadConfigurationToDto(config,
+                _configurationReaderService.ReadConfiguration(config,
+                    backgroundColors,
                     kisekae.Cels.ToDictionary(x => x.FileName.ToLowerInvariant()),
                     kisekae.Palettes.ToDictionary(x => x.FileName.ToLowerInvariant()));
 
             SetPaletteColors(kisekae.Palettes);
 
+            foreach (var (config, colorIndex) in backgroundColors)
+                config.BackgroundColorHex = kisekae.Palettes.First()?.Colors[colorIndex].Hex ?? Color.White.ToHex();
             foreach (var celConfig in kisekae.Configurations.SelectMany(config => config.Cels))
-            {
                 _fileParserService.RenderCel(celConfig);
-            }
 
             await context.AddAsync(kisekae);
             await context.SaveChangesAsync();
+            
+            //_storage.DeleteDirectory(directory);
         }
 
         private async Task SetInnerFiles(Kisekae kisekae, string directory, IEnumerable<string> filenames)

@@ -52,7 +52,7 @@ export default class Tracker {
             let element = elements[index] as HTMLDivElement
             element.style.visibility = "hidden"
 
-            if (cel.sets[set]) {
+            if (cel.initialPositions[set] != null) {
                 element.style.visibility = "visible"
                 let position = Tracker.getCoordinate(cel, set)
                 element.style.left = `${position.x}px`
@@ -136,7 +136,7 @@ export default class Tracker {
             this.setPlayArea(this.set)
         })
 
-        this.playset.enabledSets.forEach((enabled, index) => {
+        this.playset.sets.forEach((enabled, index) => {
             if (enabled) {
                 let button = new Builder("li")
                     .addChildren(new Builder("button")

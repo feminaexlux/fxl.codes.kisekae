@@ -13,6 +13,6 @@ namespace fxl.codes.kisekae.Entities
         public string Data { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
-        public int BorderIndex { get; set; }
+        public string BackgroundColorHex { get; set; }
     }
 }

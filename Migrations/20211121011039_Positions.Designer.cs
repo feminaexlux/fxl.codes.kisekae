@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using fxl.codes.kisekae;
@@ -11,9 +12,10 @@ using fxl.codes.kisekae;
 namespace fxl.codes.kisekae.Migrations
 {
     [DbContext(typeof(KisekaeContext))]
-    partial class KisekaeContextModelSnapshot : ModelSnapshot
+    [Migration("20211121011039_Positions")]
+    partial class Positions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

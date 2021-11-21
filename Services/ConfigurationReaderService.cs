@@ -22,9 +22,16 @@ namespace fxl.codes.kisekae.Services
             _logger = logger;
         }
 
-        public void ReadConfigurationToDto(Configuration dto, IDictionary<string, Cel> cels, IDictionary<string, Palette> palettes)
+        public void ReadConfiguration(Configuration dto,
+                                      IDictionary<Configuration, int> backgroundColors,
+                                      IDictionary<string, Cel> cels,
+                                      Dictionary<string, Palette> palettes)
         {
+            _logger.LogInformation($"Reading {dto.Name}");
             var initialPositions = new StringBuilder();
+            var backgroundColorIndex = 0;
+            var paletteOrder = new List<Palette>();
+            var celLines = new List<string>();
 
             foreach (var line in dto.Data.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
                 switch (line.ToCharArray()[0])
@@ -38,13 +45,13 @@ namespace fxl.codes.kisekae.Services
                     case '[':
                         var borderValue = line[1..];
                         if (borderValue.Contains(';')) borderValue = borderValue.Split(';')[0].Trim();
-                        dto.BorderIndex = int.Parse(borderValue);
+                        backgroundColorIndex = int.Parse(borderValue);
                         break;
                     case '%':
-                        UpdatePalette(line, palettes);
+                        SetPaletteOrder(line, palettes, paletteOrder);
                         break;
                     case '#':
-                        dto.Cels.Add(SetCelConfig(line, dto, cels, palettes.Values.ToArray()));
+                        celLines.Add(line);
                         break;
                     case '$':
                     case ' ':
@@ -52,7 +59,9 @@ namespace fxl.codes.kisekae.Services
                         break;
                 }
 
+            foreach (var line in celLines) dto.Cels.Add(SetCelConfig(line, dto, cels, paletteOrder));
             SetInitialPositions(dto, initialPositions.ToString());
+            backgroundColors.Add(dto, backgroundColorIndex);
         }
 
         private static CelConfig SetCelConfig(string line, Configuration configuration, IDictionary<string, Cel> cels, IReadOnlyList<Palette> palettes)
@@ -105,7 +114,7 @@ namespace fxl.codes.kisekae.Services
                     var success = int.TryParse(id, out var result);
                     if (!success) continue;
 
-                    if (cel.Sets == Set.Unset)
+                    if (cel.Sets == Set.None)
                         cel.Sets = (Set)(2 ^ result);
                     else
                         cel.Sets |= (Set)(2 ^ result);
@@ -117,31 +126,36 @@ namespace fxl.codes.kisekae.Services
             return cel;
         }
 
-        private static void UpdatePalette(string line, IDictionary<string, Palette> palettes)
+        private static void SetPaletteOrder(string line, IReadOnlyDictionary<string, Palette> palettes, ICollection<Palette> paletteOrder)
         {
             var parts = line.Split(';');
             var palette = palettes[parts[0].Trim().ToLowerInvariant().Replace("%", "")];
-            if (parts.Length > 1) palette.Comment = parts[1].Trim();
+            paletteOrder.Add(palette);
         }
 
         private static void SetInitialPositions(Configuration dto, string positions)
         {
             var sets = positions.Split('$', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var set in sets)
+            for (var index = 0; index < sets.Length; index++)
             {
+                var set = sets[index];
                 var value = set.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 var paletteGroup = int.Parse(value[0]);
 
                 for (var innerIndex = 1; innerIndex < value.Length; innerIndex++)
                 {
-                    if (value[innerIndex] == "*") continue;
-                    var point = value[innerIndex].Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    if (value[innerIndex].Contains('*')) continue;
+                    var point = value[innerIndex].Trim().Split(',', StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var cel in dto.Cels.Where(x => x.Mark == innerIndex - 1))
                     {
                         cel.PaletteGroup = paletteGroup;
-                        cel.X = int.Parse(point[0]);
-                        cel.Y = int.Parse(point[1]);
+                        cel.Positions.Add(new CelPosition
+                        {
+                            Set = index,
+                            X = int.Parse(point[0]),
+                            Y = int.Parse(point[1])
+                        });
                     }
                 }
             }

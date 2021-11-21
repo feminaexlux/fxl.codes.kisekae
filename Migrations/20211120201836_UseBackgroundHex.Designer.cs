@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using fxl.codes.kisekae;
@@ -11,9 +12,10 @@ using fxl.codes.kisekae;
 namespace fxl.codes.kisekae.Migrations
 {
     [DbContext(typeof(KisekaeContext))]
-    partial class KisekaeContextModelSnapshot : ModelSnapshot
+    [Migration("20211120201836_UseBackgroundHex")]
+    partial class UseBackgroundHex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,6 +119,12 @@ namespace fxl.codes.kisekae.Migrations
                     b.Property<int>("Transparency")
                         .HasColumnType("integer");
 
+                    b.Property<int>("X")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Y")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CelId");
@@ -128,33 +136,6 @@ namespace fxl.codes.kisekae.Migrations
                     b.HasIndex("RenderId");
 
                     b.ToTable("CelConfigs");
-                });
-
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelPosition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CelConfigId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Set")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("X")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Y")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CelConfigId");
-
-                    b.ToTable("CelPosition");
                 });
 
             modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>
@@ -319,13 +300,6 @@ namespace fxl.codes.kisekae.Migrations
                     b.Navigation("Render");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelPosition", b =>
-                {
-                    b.HasOne("fxl.codes.kisekae.Entities.CelConfig", null)
-                        .WithMany("Positions")
-                        .HasForeignKey("CelConfigId");
-                });
-
             modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>
                 {
                     b.HasOne("fxl.codes.kisekae.Entities.Kisekae", "Kisekae")
@@ -351,11 +325,6 @@ namespace fxl.codes.kisekae.Migrations
                         .HasForeignKey("PaletteId");
 
                     b.Navigation("Palette");
-                });
-
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelConfig", b =>
-                {
-                    b.Navigation("Positions");
                 });
 
             modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>

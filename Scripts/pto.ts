@@ -3,7 +3,7 @@ export interface Playset {
     readonly height: number
     readonly width: number
     readonly cels: Cel[]
-    readonly enabledSets: boolean[]
+    readonly sets: boolean[]
 }
 
 export interface Cel {
@@ -11,7 +11,6 @@ export interface Cel {
     readonly fix: number
     readonly initialPositions: Coordinate[]
     readonly offset: Coordinate
-    readonly sets: boolean[]
 
     currentPositions: Coordinate[]
     currentFix: number
