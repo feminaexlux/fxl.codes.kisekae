@@ -55,7 +55,7 @@ namespace fxl.codes.kisekae.Services
                         break;
                     case '$':
                     case ' ':
-                        initialPositions.Append(line.Replace("\\r\\n", "").Replace("\\n", ""));
+                        initialPositions.Append(line);
                         break;
                 }
 
@@ -113,15 +113,12 @@ namespace fxl.codes.kisekae.Services
                 {
                     var success = int.TryParse(id, out var result);
                     if (!success) continue;
-
-                    if (cel.Sets == Set.None)
-                        cel.Sets = (Set)(2 ^ result);
-                    else
-                        cel.Sets |= (Set)(2 ^ result);
+                    cel.Sets[result] = true;
                 }
             }
 
             cel.Palette ??= palettes[0];
+            if (!cel.Sets.Max()) Array.Fill(cel.Sets, true);
 
             return cel;
         }
@@ -150,6 +147,8 @@ namespace fxl.codes.kisekae.Services
                     foreach (var cel in dto.Cels.Where(x => x.Mark == innerIndex - 1))
                     {
                         cel.PaletteGroup = paletteGroup;
+
+                        if (!cel.Sets[index]) continue;
                         cel.Positions.Add(new CelPosition
                         {
                             Set = index,

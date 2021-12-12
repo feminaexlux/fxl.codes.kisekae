@@ -2868,15 +2868,8 @@ body main header ul li button.active-set.mdc-ripple-upgraded {
 body main article {
   display: flex;
   flex: 1;
+  justify-content: space-around;
   text-align: center;
-}
-body main article #play_space {
-  margin: 2em auto;
-  position: relative;
-}
-body main article #play_space .cel-image {
-  visibility: hidden;
-  position: absolute;
 }
 body main .visually-hidden {
   position: absolute !important;

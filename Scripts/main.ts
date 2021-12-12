@@ -11,7 +11,7 @@ declare global {
     }
 }
 
-export default class Main {
+class Main {
     appBar: MDCTopAppBar
     linearProgress: MDCLinearProgress
     ripples: MDCRipple[] = []

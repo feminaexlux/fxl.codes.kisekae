@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Text.Json.Serialization;
 using fxl.codes.kisekae.Entities;
@@ -19,16 +18,7 @@ namespace fxl.codes.kisekae.Models
             var totalCels = configuration.Cels.Count;
             Cels = configuration.Cels.Select((x, index) => new CelModel(x, (totalCels - index) * 10)).ToArray();
 
-            var summation = configuration.Cels.Aggregate(Set.None, (current, cel) => current | cel.Sets);
-            if (summation == Set.None)
-            {
-                Array.Fill(Sets, true);
-                return;
-            }
-
-            foreach (var value in Enum.GetValues<Set>().Where(x => (x & summation) == x && x != Set.None))
-                if (value == Set.Zero) Sets[0] = true;
-                else Sets[(int)Math.Log2((double)value)] = true;
+            for (var index = 0; index < 10; index++) Sets[index] = configuration.Cels.Any(x => x.Positions.Any(y => y.Set == index));
         }
 
         public CelModel[] Cels { get; set; }

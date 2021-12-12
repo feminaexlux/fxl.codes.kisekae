@@ -9,6 +9,12 @@ namespace fxl.codes.kisekae
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CelConfig>().Ignore(x => x.Sets);
+            base.OnModelCreating(modelBuilder);
+        }
+
         public DbSet<Kisekae> KisekaeSets { get; set; }
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<Cel> Cels { get; set; }

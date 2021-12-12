@@ -13,8 +13,8 @@ namespace fxl.codes.kisekae.Entities
         public int PaletteGroup { get; set; }
         public string Comment { get; set; }
         public int Transparency { get; set; }
-        public Set Sets { get; set; }
         public Render Render { get; set; }
         public List<CelPosition> Positions { get; set; } = new();
+        public bool[] Sets { get; set; } = new bool[10];
     }
 }

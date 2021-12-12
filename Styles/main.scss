@@ -56,17 +56,8 @@ body {
     article {
       display: flex;
       flex: 1;
+      justify-content: space-around;
       text-align: center;
-      
-      #play_space {
-        margin: 2em auto;
-        position: relative;
-        
-        .cel-image {
-          visibility: hidden;
-          position: absolute;
-        }
-      }
     }
 
     .visually-hidden {

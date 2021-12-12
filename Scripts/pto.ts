@@ -7,13 +7,14 @@ export interface Playset {
 }
 
 export interface Cel {
-    readonly id: number
+    readonly mark: number
     readonly fix: number
-    readonly initialPositions: Coordinate[]
+    readonly initialPositions: { [key: number]: Coordinate }
     readonly offset: Coordinate
-
-    currentPositions: Coordinate[]
-    currentFix: number
+    readonly image: string
+    readonly zIndex: number
+    readonly height: number
+    readonly width: number
 }
 
 export class Coordinate {
