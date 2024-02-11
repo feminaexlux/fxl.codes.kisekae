@@ -6,20 +6,7 @@
 
 <form enctype="multipart/form-data" method="post" asp-action="Upload" id="file_upload">
     <fieldset>
-        <input type="file" name="file" multiple accept=".lzh" class="visually-hidden" id="lzh_upload">
-        <label for="lzh_upload" class="mdc-button mdc-button--outlined">
-            <span class="mdc-button__ripple"></span>
-            <span class="mdc-button__label">Add KiSS file(s)</span>
-        </label>
-        
-        <button type="submit" class="mdc-button mdc-button--unelevated">
-            <span class="mdc-button__ripple"></span>
-            <span class="mdc-button__label">Upload</span>
-        </button>
-        
-        <div class="selected-files mdc-evolution-chip-set" role="grid">
-            <div class="mdc-evolution-chip-set__chips" role="presentation"></div>
-        </div>
+        <input type="file" name="file" multiple accept=".lzh">
     </fieldset>
 </form>
 
@@ -42,5 +29,5 @@
 
 @section Scripts
 {
-    <script src="~/js/uploader.js" asp-append-version="true"></script>
+    
 }

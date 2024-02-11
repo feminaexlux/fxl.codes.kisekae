@@ -1,12 +1,24 @@
 {
   "compilerOptions": {
     "moduleResolution": "Node",
-    "module": "ES6",
+    "module": "AMD",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true
+    "outFile": "wwwroot/js/main.js",
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "jquery"
+    ],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ]
   },
-  "include": ["./Scripts/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    "./Scripts/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

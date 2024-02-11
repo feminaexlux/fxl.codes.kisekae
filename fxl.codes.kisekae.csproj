@@ -7,26 +7,27 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <TypeScriptCompile Include="Scripts\main.ts" />
-      <TypeScriptCompile Include="Scripts\pto.ts" />
-      <TypeScriptCompile Include="Scripts\tracker.ts" />
-      <TypeScriptCompile Include="Scripts\upload.ts" />
-      <TypeScriptCompile Include="Scripts\utility.ts" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql" Version="8.0.1"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.1" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.1" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Npgsql" Version="8.0.1" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\main.css"/>
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\css\main.css" />
+        <Folder Include="wwwroot\css\"/>
+        <Folder Include="wwwroot\js\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Scripts\fabric.min.js"/>
     </ItemGroup>
 </Project>

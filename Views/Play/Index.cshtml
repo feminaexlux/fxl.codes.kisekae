@@ -4,24 +4,23 @@
     ViewData["Title"] = $"Play with {Model.Name}";
 }
 
-<header id="play_menu">
-    <ul>
-        <li>
-            <button class="mdc-button mdc-button--icon-trailing" data-rel="reset">
-                <span class="mdc-button__ripple"></span>
-                <span class="mdc-button__label">Reset</span>
-                <i class="material-icons mdc-button__icon" aria-hidden="true">restart_alt</i>
-            </button>
-        </li>
-        <li class="mdc-typography--button">Sets</li>
-    </ul>
+<header>
+    Sets:
+    @for (var index = 0; index < Model.Sets.Length; index++)
+    {
+        @if (Model.Sets[index])
+        {
+            <a href="javascript:" class="set-link" data-set="@index">@(index + 1)</a>
+        }
+    }
 </header>
-<article id="play_area" style="background-color: #@Model.BorderColor">
-    <canvas id="play_space" style="height: @(Model.Height)px; width: @(Model.Width)px" height="@Model.Height" width="@Model.Width"></canvas>
-</article>
+<div class="container">
+    <canvas id="play_space"></canvas>
+</div>
+
 @section Scripts
 {
-    <script>
-        document.kisekae.load("play_space", "play_menu", @Json.Serialize(Model))
-    </script>
+    <script src="~/js/main.js"></script>
+    <script>playSet = @Json.Serialize(Model);</script>
+
 }

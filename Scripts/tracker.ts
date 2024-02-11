@@ -1,3 +1,4 @@
+/*
 import * as _ from "lodash"
 import {fabric} from "fabric"
 import {Cel, Playset} from "./pto"
@@ -62,3 +63,4 @@ export default class Tracker {
         }
     }
 }
+*/
