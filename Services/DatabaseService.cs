@@ -59,14 +59,15 @@ namespace fxl.codes.kisekae.Services
         public async void StoreToDatabase(IFormFile file)
         {
             var memoryStream = await GetAsMemoryStream(file);
-            var checksum = Convert.ToBase64String(SHA256.Create().ComputeHash(memoryStream.GetBuffer()));
+            var checksum = Convert.ToBase64String(SHA256.HashData(memoryStream.GetBuffer()));
             memoryStream.Position = 0; // Reset for re-read
 
             await using var context = await _contextFactory.CreateDbContextAsync();
             var existing = await context.KisekaeSets
                 .FirstOrDefaultAsync(x => string.Equals(x.FileName, file.FileName)
                                           || string.Equals(x.CheckSum, checksum));
-            if (existing != null) return;
+            if (existing != null) context.KisekaeSets.Remove(existing);
+            await context.SaveChangesAsync();
 
             _fileParserService.UnzipLzh(file, memoryStream);
             var directory = Path.GetFileNameWithoutExtension(file.FileName);
@@ -96,8 +97,6 @@ namespace fxl.codes.kisekae.Services
 
             await context.AddAsync(kisekae);
             await context.SaveChangesAsync();
-            
-            //_storage.DeleteDirectory(directory);
         }
 
         private async Task SetInnerFiles(Kisekae kisekae, string directory, IEnumerable<string> filenames)

@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using fxl.codes.kisekae.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -16,7 +15,7 @@ namespace fxl.codes.kisekae.Services
 {
     public class FileParserService
     {
-        private static readonly byte[] KissHeader = Encoding.ASCII.GetBytes("KiSS");
+        private static readonly byte[] KissHeader = "KiSS"u8.ToArray();
         private static readonly Color Transparent = Color.Black.WithAlpha(0);
 
         private readonly ILogger<FileParserService> _logger;
@@ -57,7 +56,6 @@ namespace fxl.codes.kisekae.Services
             }
 
             _storage.CreateDirectory(directory);
-
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -167,11 +165,10 @@ namespace fxl.codes.kisekae.Services
 
             for (var row = 0; row < height; row++)
             {
-                var span = bitmap.GetPixelRowSpan(row);
                 for (var column = 0; column < width; column++)
                 {
                     var value = values[index];
-                    span[column] = value == 0 || value >= palette.Colors.Count ? Transparent : Color.ParseHex(palette.Colors[value].Hex);
+                    bitmap[row, column] = value == 0 || value >= palette.Colors.Count ? Transparent : Color.ParseHex(palette.Colors[value].Hex);
                     index++;
                 }
 

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Npgsql.Logging;
 
 namespace fxl.codes.kisekae
 {
@@ -37,8 +36,6 @@ namespace fxl.codes.kisekae
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                NpgsqlLogManager.Provider = new ConsoleLoggingProvider();
-                NpgsqlLogManager.IsParameterLoggingEnabled = true;
             }
             else
             {
