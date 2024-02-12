@@ -20,11 +20,6 @@ export class PlaySpace {
         });
 
         this.canvas.setZoom(this.canvas.width / model.width);
-
-        this.canvas.on("mouse:down", event => {
-            if (!event.target) return;
-            console.log(event.target);
-        });
     }
 
     async selectSet(set?: number) {
@@ -68,9 +63,13 @@ export class PlaySpace {
         for (let key in groups) {
             const group = groups[key];
             const length = group.length;
-            if (length < 2) continue;
-
             const top = group.pop();
+
+            if (length < 2) {
+                top.set({hoverCursor: "move"});
+                continue;
+            }
+
             if (!top.selectable) continue;
 
             top.set({hoverCursor: "move"});

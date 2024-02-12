@@ -7,41 +7,40 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace fxl.codes.kisekae.Controllers
+namespace fxl.codes.kisekae.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly DatabaseService _databaseService;
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger, DatabaseService databaseService)
     {
-        private readonly DatabaseService _databaseService;
-        private readonly ILogger<HomeController> _logger;
+        _logger = logger;
+        _databaseService = databaseService;
+    }
 
-        public HomeController(ILogger<HomeController> logger, DatabaseService databaseService)
-        {
-            _logger = logger;
-            _databaseService = databaseService;
-        }
+    public IActionResult Index()
+    {
+        var files = _databaseService.GetAll();
+        return View(files.Select(x => new KisekaeModel(x)));
+    }
 
-        public IActionResult Index()
-        {
-            var files = _databaseService.GetAll();
-            return View(files.Select(x => new KisekaeModel(x)));
-        }
+    [HttpPost]
+    public IActionResult Upload(IFormFile file)
+    {
+        _logger.LogTrace($"File uploaded: {file?.FileName}");
+        if (!(file?.FileName.EndsWith("lzh", StringComparison.InvariantCultureIgnoreCase) ?? false))
+            throw new Exception("Please select a *.lzh file");
 
-        [HttpPost]
-        public IActionResult Upload(IFormFile file)
-        {
-            _logger.LogTrace($"File uploaded: {file?.FileName}");
-            if (!(file?.FileName.EndsWith("lzh", StringComparison.InvariantCultureIgnoreCase) ?? false))
-                throw new Exception("Please select a *.lzh file");
+        _databaseService.StoreToDatabase(file);
 
-            _databaseService.StoreToDatabase(file);
+        return Redirect("~/");
+    }
 
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

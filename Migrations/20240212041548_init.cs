@@ -1,13 +1,14 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace fxl.codes.kisekae.Migrations
 {
-    public partial class Startup : Migration
+    /// <inheritdoc />
+    public partial class init : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -22,6 +23,19 @@ namespace fxl.codes.kisekae.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_KisekaeSets", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Renders",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Image = table.Column<byte[]>(type: "bytea", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Renders", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -59,7 +73,7 @@ namespace fxl.codes.kisekae.Migrations
                     Data = table.Column<string>(type: "text", nullable: true),
                     Height = table.Column<int>(type: "integer", nullable: false),
                     Width = table.Column<int>(type: "integer", nullable: false),
-                    BorderIndex = table.Column<int>(type: "integer", nullable: false)
+                    BackgroundColorHex = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -79,7 +93,6 @@ namespace fxl.codes.kisekae.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     KisekaeId = table.Column<int>(type: "integer", nullable: true),
                     FileName = table.Column<string>(type: "text", nullable: true),
-                    Comment = table.Column<string>(type: "text", nullable: true),
                     Data = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
                 constraints: table =>
@@ -124,10 +137,8 @@ namespace fxl.codes.kisekae.Migrations
                     PaletteId = table.Column<int>(type: "integer", nullable: true),
                     PaletteGroup = table.Column<int>(type: "integer", nullable: false),
                     Comment = table.Column<string>(type: "text", nullable: true),
-                    X = table.Column<int>(type: "integer", nullable: false),
-                    Y = table.Column<int>(type: "integer", nullable: false),
                     Transparency = table.Column<int>(type: "integer", nullable: false),
-                    Sets = table.Column<int>(type: "integer", nullable: false)
+                    RenderId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -146,6 +157,11 @@ namespace fxl.codes.kisekae.Migrations
                         name: "FK_CelConfigs_Palettes_PaletteId",
                         column: x => x.PaletteId,
                         principalTable: "Palettes",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_CelConfigs_Renders_RenderId",
+                        column: x => x.RenderId,
+                        principalTable: "Renders",
                         principalColumn: "Id");
                 });
 
@@ -170,27 +186,23 @@ namespace fxl.codes.kisekae.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Renders",
+                name: "CelPosition",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    CelId = table.Column<int>(type: "integer", nullable: true),
-                    PaletteId = table.Column<int>(type: "integer", nullable: true),
-                    Image = table.Column<byte[]>(type: "bytea", nullable: true)
+                    Set = table.Column<int>(type: "integer", nullable: false),
+                    X = table.Column<int>(type: "integer", nullable: false),
+                    Y = table.Column<int>(type: "integer", nullable: false),
+                    CelConfigId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Renders", x => x.Id);
+                    table.PrimaryKey("PK_CelPosition", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Renders_Cels_CelId",
-                        column: x => x.CelId,
-                        principalTable: "Cels",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Renders_Palettes_PaletteId",
-                        column: x => x.PaletteId,
-                        principalTable: "Palettes",
+                        name: "FK_CelPosition_CelConfigs_CelConfigId",
+                        column: x => x.CelConfigId,
+                        principalTable: "CelConfigs",
                         principalColumn: "Id");
                 });
 
@@ -215,6 +227,16 @@ namespace fxl.codes.kisekae.Migrations
                 column: "PaletteId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CelConfigs_RenderId",
+                table: "CelConfigs",
+                column: "RenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CelPosition_CelConfigId",
+                table: "CelPosition",
+                column: "CelConfigId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Cels_KisekaeId",
                 table: "Cels",
                 column: "KisekaeId");
@@ -233,40 +255,34 @@ namespace fxl.codes.kisekae.Migrations
                 name: "IX_Palettes_KisekaeId",
                 table: "Palettes",
                 column: "KisekaeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Renders_CelId",
-                table: "Renders",
-                column: "CelId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Renders_PaletteId",
-                table: "Renders",
-                column: "PaletteId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "Action");
 
             migrationBuilder.DropTable(
-                name: "CelConfigs");
+                name: "CelPosition");
 
             migrationBuilder.DropTable(
                 name: "PaletteColors");
 
             migrationBuilder.DropTable(
-                name: "Renders");
-
-            migrationBuilder.DropTable(
-                name: "Configurations");
+                name: "CelConfigs");
 
             migrationBuilder.DropTable(
                 name: "Cels");
 
             migrationBuilder.DropTable(
+                name: "Configurations");
+
+            migrationBuilder.DropTable(
                 name: "Palettes");
+
+            migrationBuilder.DropTable(
+                name: "Renders");
 
             migrationBuilder.DropTable(
                 name: "KisekaeSets");
