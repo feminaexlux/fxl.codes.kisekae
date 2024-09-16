@@ -10,8 +10,14 @@ export class PlaySpace {
         const container = $(".container");
         this.canvas = new fabric.Canvas("play_space");
         this.canvas.selection = false;
-        this.canvas.setHeight(container.height()).setWidth(container.width());
         this.model = model;
+
+        const maxContainer = Math.max(container.innerHeight(), container.innerWidth()) - 20;
+        const maxModel = Math.max(model.height, model.width);
+        const ratio = maxContainer / maxModel;
+
+        this.canvas.setHeight(ratio * model.height).setWidth(ratio * model.width);
+
         this.selectSet();
 
         $(".set-link").on("click", event => {

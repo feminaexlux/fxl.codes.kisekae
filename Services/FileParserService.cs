@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using fxl.codes.kisekae.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -27,7 +28,7 @@ public class FileParserService
         _storage = IsolatedStorageFile.GetUserStoreForApplication();
     }
 
-    public void UnzipLzh(IFormFile file, MemoryStream memoryStream = null)
+    public async Task UnzipLzh(IFormFile file, MemoryStream memoryStream = null)
     {
         if (!_storage.FileExists(file.FileName))
         {
@@ -48,25 +49,13 @@ public class FileParserService
             .ToString() ?? "";
 
         var directory = Path.GetFileNameWithoutExtension(file.FileName);
-        if (_storage.DirectoryExists(directory)) return;
+        if (!_storage.DirectoryExists(directory)) _storage.CreateDirectory(directory);
 
-        _storage.CreateDirectory(directory);
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "7z",
-                Arguments = $"x {Path.Combine(root, file.FileName)} -o{Path.Combine(root, directory)}",
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            }
-        };
+        var args = $"x \"{Path.Combine(root, file.FileName)}\" -o\"{Path.Combine(root, directory)}\"";
+        var process = Process.Start("7z", args);
+        if (process == null) throw new ArgumentException("Unable to run 7z against archive");
 
-        if (!process.Start()) throw new InvalidDataException("Unable to call p7zip to extract archive");
-
-        while (!process.StandardOutput.EndOfStream) _logger.LogTrace(process.StandardOutput.ReadLine());
-        process.WaitForExit();
+        await process.WaitForExitAsync();
     }
 
     public Color[] ParsePalette(Palette palette, out int groups, out int colorsPerGroup)

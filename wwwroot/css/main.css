@@ -19,6 +19,9 @@ body main .container {
   height: 100%;
   width: 100%;
 }
+body main .container .canvas-container {
+  margin: 0 auto;
+}
 body footer {
   text-align: center;
 }
