@@ -1,9 +1,11 @@
-/node_modules/
+*/node_modules/
 /.idea/
-/bin/
-/obj/
+*/.idea/
+*/bin/
+*/obj/
 *.DotSettings
 *.DotSettings.user
 
 *.Development.json
 *.Release.json
+.DS_Store
