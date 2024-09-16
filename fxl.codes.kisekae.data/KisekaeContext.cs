@@ -1,26 +1,21 @@
 using fxl.codes.kisekae.data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace fxl.codes.kisekae.data
+namespace fxl.codes.kisekae.data;
+
+public class KisekaeContext(DbContextOptions<KisekaeContext> options) : DbContext(options)
 {
-    public class KisekaeContext : DbContext
+    public DbSet<Kisekae> KisekaeSets { get; init; }
+    public DbSet<Configuration> Configurations { get; init; }
+    public DbSet<Cel> Cels { get; init; }
+    public DbSet<CelConfig> CelConfigs { get; init; }
+    public DbSet<Render> Renders { get; init; }
+    public DbSet<Palette> Palettes { get; init; }
+    public DbSet<PaletteColor> PaletteColors { get; init; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public KisekaeContext(DbContextOptions<KisekaeContext> options) : base(options)
-        {
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<CelConfig>().Ignore(x => x.Sets);
-            base.OnModelCreating(modelBuilder);
-        }
-
-        public DbSet<Kisekae> KisekaeSets { get; set; }
-        public DbSet<Configuration> Configurations { get; set; }
-        public DbSet<Cel> Cels { get; set; }
-        public DbSet<CelConfig> CelConfigs { get; set; }
-        public DbSet<Render> Renders { get; set; }
-        public DbSet<Palette> Palettes { get; set; }
-        public DbSet<PaletteColor> PaletteColors { get; set; }
+        modelBuilder.Entity<CelConfig>().Ignore(x => x.Sets);
+        base.OnModelCreating(modelBuilder);
     }
 }

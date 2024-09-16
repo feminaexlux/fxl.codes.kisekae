@@ -23,7 +23,7 @@ namespace fxl.codes.kisekae.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Action", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Action", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +44,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("Action");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Cel", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Cel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -80,7 +80,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("Cels");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelConfig", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.CelConfig", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -128,7 +128,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("CelConfigs");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelPosition", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.CelPosition", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -155,7 +155,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("CelPosition");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Configuration", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -188,7 +188,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("Configurations");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Kisekae", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Kisekae", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -207,7 +207,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("KisekaeSets");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Palette", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Palette", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -231,7 +231,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("Palettes");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.PaletteColor", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.PaletteColor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,7 +255,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("PaletteColors");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Render", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Render", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -271,37 +271,37 @@ namespace fxl.codes.kisekae.Migrations
                     b.ToTable("Renders");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Action", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Action", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Configuration", null)
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Configuration", null)
                         .WithMany("Actions")
                         .HasForeignKey("ConfigurationId");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Cel", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Cel", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Kisekae", "Kisekae")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Kisekae", "Kisekae")
                         .WithMany("Cels")
                         .HasForeignKey("KisekaeId");
 
                     b.Navigation("Kisekae");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelConfig", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.CelConfig", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Cel", "Cel")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Cel", "Cel")
                         .WithMany()
                         .HasForeignKey("CelId");
 
-                    b.HasOne("fxl.codes.kisekae.Entities.Configuration", "Configuration")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Configuration", "Configuration")
                         .WithMany("Cels")
                         .HasForeignKey("ConfigurationId");
 
-                    b.HasOne("fxl.codes.kisekae.Entities.Palette", "Palette")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Palette", "Palette")
                         .WithMany()
                         .HasForeignKey("PaletteId");
 
-                    b.HasOne("fxl.codes.kisekae.Entities.Render", "Render")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Render", "Render")
                         .WithMany()
                         .HasForeignKey("RenderId");
 
@@ -314,53 +314,53 @@ namespace fxl.codes.kisekae.Migrations
                     b.Navigation("Render");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelPosition", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.CelPosition", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.CelConfig", null)
+                    b.HasOne("fxl.codes.kisekae.data.Entities.CelConfig", null)
                         .WithMany("Positions")
                         .HasForeignKey("CelConfigId");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Configuration", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Kisekae", "Kisekae")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Kisekae", "Kisekae")
                         .WithMany("Configurations")
                         .HasForeignKey("KisekaeId");
 
                     b.Navigation("Kisekae");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Palette", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Palette", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Kisekae", "Kisekae")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Kisekae", "Kisekae")
                         .WithMany("Palettes")
                         .HasForeignKey("KisekaeId");
 
                     b.Navigation("Kisekae");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.PaletteColor", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.PaletteColor", b =>
                 {
-                    b.HasOne("fxl.codes.kisekae.Entities.Palette", "Palette")
+                    b.HasOne("fxl.codes.kisekae.data.Entities.Palette", "Palette")
                         .WithMany("Colors")
                         .HasForeignKey("PaletteId");
 
                     b.Navigation("Palette");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.CelConfig", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.CelConfig", b =>
                 {
                     b.Navigation("Positions");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Configuration", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Configuration", b =>
                 {
                     b.Navigation("Actions");
 
                     b.Navigation("Cels");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Kisekae", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Kisekae", b =>
                 {
                     b.Navigation("Cels");
 
@@ -369,7 +369,7 @@ namespace fxl.codes.kisekae.Migrations
                     b.Navigation("Palettes");
                 });
 
-            modelBuilder.Entity("fxl.codes.kisekae.Entities.Palette", b =>
+            modelBuilder.Entity("fxl.codes.kisekae.data.Entities.Palette", b =>
                 {
                     b.Navigation("Colors");
                 });
