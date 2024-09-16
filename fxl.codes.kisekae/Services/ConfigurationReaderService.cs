@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.data.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace fxl.codes.kisekae.Services;

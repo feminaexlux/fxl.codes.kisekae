@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.data.Entities;
 
 namespace fxl.codes.kisekae.Models
 {

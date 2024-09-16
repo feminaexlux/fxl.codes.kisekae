@@ -1,4 +1,4 @@
-namespace fxl.codes.kisekae.Entities
+namespace fxl.codes.kisekae.data.Entities
 {
     public class Action
     {

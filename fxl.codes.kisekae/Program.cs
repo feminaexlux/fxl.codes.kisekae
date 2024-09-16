@@ -1,4 +1,4 @@
-using fxl.codes.kisekae;
+using fxl.codes.kisekae.data;
 using fxl.codes.kisekae.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;

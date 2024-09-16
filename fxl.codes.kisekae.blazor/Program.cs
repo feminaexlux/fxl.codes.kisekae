@@ -1,10 +1,13 @@
 using fxl.codes.kisekae.blazor.Components;
+using fxl.codes.kisekae.data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddDbContextFactory<KisekaeContext>(options => { options.UseNpgsql(builder.Configuration.GetConnectionString("kisekae")); });
 
 var app = builder.Build();
 

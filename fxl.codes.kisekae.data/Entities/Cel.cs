@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace fxl.codes.kisekae.Entities
+namespace fxl.codes.kisekae.data.Entities
 {
     public class Cel
     {

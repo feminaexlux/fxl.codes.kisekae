@@ -6,12 +6,13 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.data;
+using fxl.codes.kisekae.data.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
-using Configuration = fxl.codes.kisekae.Entities.Configuration;
+using Configuration = fxl.codes.kisekae.data.Entities.Configuration;
 
 namespace fxl.codes.kisekae.Services;
 

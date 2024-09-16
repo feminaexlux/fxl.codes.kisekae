@@ -6,7 +6,7 @@ using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.data.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;

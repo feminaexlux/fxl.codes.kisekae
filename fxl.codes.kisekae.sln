@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fxl.codes.kisekae", "fxl.co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fxl.codes.kisekae.blazor", "fxl.codes.kisekae.blazor\fxl.codes.kisekae.blazor.csproj", "{57F7E699-41A9-4312-9877-DEAC8C2E1F2E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fxl.codes.kisekae.data", "fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj", "{A977AF77-5A7F-4DDA-8113-3367EE9920BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{57F7E699-41A9-4312-9877-DEAC8C2E1F2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57F7E699-41A9-4312-9877-DEAC8C2E1F2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57F7E699-41A9-4312-9877-DEAC8C2E1F2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A977AF77-5A7F-4DDA-8113-3367EE9920BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A977AF77-5A7F-4DDA-8113-3367EE9920BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A977AF77-5A7F-4DDA-8113-3367EE9920BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A977AF77-5A7F-4DDA-8113-3367EE9920BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

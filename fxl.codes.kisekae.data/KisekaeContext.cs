@@ -1,7 +1,7 @@
-using fxl.codes.kisekae.Entities;
+using fxl.codes.kisekae.data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace fxl.codes.kisekae
+namespace fxl.codes.kisekae.data
 {
     public class KisekaeContext : DbContext
     {
