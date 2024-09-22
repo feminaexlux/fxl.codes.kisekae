@@ -1,0 +1,374 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- http://archive.gamedev.net/archive/reference/articles/article295.html -->
+<html xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/">
+<head>
+    <title>GameDev.net - Data Compression Algorithms of LARC and LHarc</title>
+    <meta content="Data Compression Algorithms of LARC and LHarc" property="og:title"/>
+    <meta content="article" property="og:type"/>
+    <meta content="http://www.gamedev.net/reference/articles/article295.asp" property="og:url"/>
+    <meta content="../../../images.gamedev.net/icons/gamedev_net.png" property="og:image"/>
+    <meta content="GameDev.net" property="og:site_name"/>
+    <meta content="103355463445" property="fb:app_id"/>
+    <meta content="Covers a number of compression algorithms, including LZSS, LZW, Huffman, Arithmetic, LZARI, and LZHUF."
+          property="og:description"/>
+    <link href="../../css/reference.css" rel=stylesheet type="text/css">
+    <link href="../../pics/gdicon.png" rel="icon" type="image/png">
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-279474-1']);
+        _gaq.push(['_trackPageview']);
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <script src="../../../partner.googleadservices.com/gampad/google_service.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        GS_googleAddAdSenseService("ca-pub-3167291168602081");
+        GS_googleEnableAllServices();
+    </script>
+    <script type="text/javascript">
+        GA_googleAddSlot("ca-pub-3167291168602081", "Leaderboard_Main");
+        GA_googleAddSlot("ca-pub-3167291168602081", "Box_Main");
+    </script>
+
+    <script type="text/javascript">
+        GA_googleFetchAds();
+    </script>
+</head>
+<body>
+<div id="header"><a href="../../index.html">GameDev.net</a>Data Compression Algorithms of LARC and LHarc</div>
+<div id="fb-root"></div>
+<script>
+    window.fbAsyncInit = function () {
+        FB.init({appId: '103355463445', status: true, cookie: true, xfbml: true});
+    };
+    (function () {
+        var e = document.createElement('script');
+        e.async = true;
+        e.src = document.location.protocol +
+            '//connect.facebook.net/en_US/all.js';
+        document.getElementById('fb-root').appendChild(e);
+    }());
+</script>
+<center>
+    <script type="text/javascript">
+        GA_googleFillSlot("Leaderboard_Main");
+    </script>
+</center>
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
+    <tr>
+        <td>
+
+            <CENTER><SPAN CLASS="title">Data Compression Algorithms of LARC and LHarc</SPAN>
+                <BR><SPAN CLASS="author">by Haruhiko Okumura*</SPAN></CENTER>
+            <P><I>*The author is the sysop of the Science SIG of PV-VAN. His address is: 12-2-404 Green Heights, 580
+                Nagasawa, Yokosuka 239 Japan</I>
+
+            <H1>Introduction</H1>
+            <P>In the spring of 1988, I wrote a very simple data compression program named LZSS in C language, and
+                uploaded it to the Science SIG (forum) of PC-VAN, Japan's biggest personal computer network.
+            <P>That program was based on Storer and Szymanski's slightly modified version of one of Lempel and Ziv's
+                algorithms. Despite its simplicity, for most files its compression outperformed the archivers then
+                widely used.
+            <P>Kazuhiko Miki rewrote my LZSS in Turbo Pascal and assembly language, and soon made it evolve into a
+                complete archiver, which he named LARC.
+            <P>The first versions of LZSS and LARC were rather slow. So I rewrote my LZSS using a binary tree, and so
+                did Miki. Although LARC's encoding was slower than the fastest archiver available, its decoding was
+                quite fast, and its algorithm was so simple that even self-extracting files (compressed files plus
+                decoder) it created were usually smaller than non-self-extracting files from other archivers.
+            <P>Soon many hobby programmers joined the archiver project at the forum. Very many suggestions were made,
+                and LARC was revised again and again. By the summer of 1988, LARC's speed and compression have improved
+                so much that LARC-compressed programs were beginning to be uploaded in many forums of PC-VAN and other
+                networks.
+            <P>In that summer I wrote another program, LZARI, which combined the LZSS algorithm with adaptive arithmetic
+                compression. Although it was slower than LZSS, its compression performance was amazing.
+            <P>Miki, the author of LARC, uploaded LZARI to NIFTY-Serve, another big information network in Japan. In
+                NIFTY-Serve, Haruyasu Yoshizaki replaced LZARI's adaptive arithmetic coding with a version of adaptive
+                Huffman coding to increase speed. Based on this algorithm, which he called LZHUF, he developed yet
+                another archiver, LHarc.
+            <P>In what follows, I will review several of these algorithms and supply simplified codes in C language.
+
+            <H1>Simple coding methods</H1>
+            <P>Replacing several (usually 8 or 4) "space" characters by one "tab" character is a very primitive method
+                for data compression. Another simple method is run-length coding, which encodes the message
+                "AAABBBBAACCCC" into "3A4B2A4C", for example.
+
+            <H1>LZSS coding</H1>
+            <P>This scheme is initiated by Ziv and Lempel [<A HREF="#ref">1</A>]. A slightly modified version is
+                described by Storer and Szymanski [<A HREF="#ref">2</A>]. An implementation using a binary tree is
+                proposed by Bell [<A HREF="#ref">3</A>]. The algorithm is quite simple: Keep a ring buffer, which
+                initially contains "space" characters only. Read several letters from the file to the buffer. Then
+                search the buffer for the longest string that matches the letters just read, and send its length and
+                position in the buffer.
+            <P>If the buffer size is 4096 bytes, the position can be encoded in 12 bits. If we represent the match
+                length in four bits, the [position, length] pair is two bytes long. If the longest match is no more than
+                two characters, then we send just one character without encoding, and restart the process with the next
+                letter. We must send one extra bit each time to tell the decoder whether we are sending a [position,
+                length] pair or an unencoded character.
+            <P>The accompanying file LZSS.C is a version of this algorithm. This implementation uses multiple binary
+                trees to speed up the search for the longest match. All the programs in this article are written in
+                draft-proposed ANSI C. I tested them with Turbo C 2.0.
+
+            <H1>LZW coding</H1>
+            <P>This scheme was devised by Ziv and Lempel [<A HREF="#ref">4</A>], and modified by Welch [<A
+                    HREF="#ref">5</A>].
+            <P>The LZW coding has been adopted by most of the existing archivers, such as ARC and PKZIP. The algorithm
+                can be made relatively fast, and is suitable for hardware implementation as well.
+            <P>The algorithm can be outlined as follows: Prepare a table that can contain several thousand items.
+                Initially register in its 0th through 255th positions the usual 256 characters. Read several letters
+                from the file to be encoded, and search the table for the longest match. Suppose the longest match is
+                given by the string "ABC". Send the position of "ABC" in the table. Read the next character from the
+                file. If it is "D", then register a new string "ABCD" in the table, and restart the process with the
+                letter "D". If the table becomes full, discard the oldest item or, preferably, the least used.
+            <P>A Pascal program for this algorithm is given in Storer's book [<A HREF="#ref">6</A>].
+
+            <H1>Huffman coding</H1>
+            <P>Classical Huffman coding is invented by Huffman [<A HREF="#ref">7</A>]. A fairly readable account is
+                given in Sedgewick [<A HREF="#ref">8</A>].
+            <P>Suppose the text to be encoded is "ABABACA", with four A's, two B's, and a C. We represent this situation
+                as follows:
+
+            <P>
+            <CENTER>
+                <TABLE>
+                    <TR>
+                        <TD><PRE><DIV CLASS="code">4    2    1
+|    |    |
+A    B    C
+</DIV></PRE>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </CENTER>
+
+            <P>Combine the least frequent two characters into one, resulting in the new frequency 2 + 1 = 3:
+
+            <P>
+            <CENTER>
+                <TABLE>
+                    <TR>
+                        <TD><PRE><DIV CLASS="code">4      3
+|     /  \
+A    B    C
+</DIV></PRE>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </CENTER>
+
+            <P>Repeat the above step until the whole characters combine into a tree:
+
+            <P>
+            <CENTER>
+                <TABLE>
+                    <TR>
+                        <TD><PRE><DIV CLASS="code">    7
+   /  \
+  /     3
+ /    /  \
+A    B    C
+</DIV></PRE>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </CENTER>
+
+            <P>Start at the top ("root") of this encoding tree, and travel to the character you want to encode. If you
+                go left, send a "0"; otherwise send a "1". Thus, "A" is encoded by "0", "B" by "10", "C" by "11".
+                Algotether, "ABABACA" will be encoded into ten bits, "0100100110".
+            <P>To decode this code, the decoder must know the encoding tree, which must be sent separately.
+            <P>A modification to this classical Huffman coding is the adaptive, or dynamic, Huffman coding. See, e.g.,
+                Gallager [<A HREF="#ref">9</A>]. In this method, the encoder and the decoder processes the first letter
+                of the text as if the frequency of each character in the file were one, say. After the first letter has
+                been processed, both parties increment the frequency of that character by one. For example, if the first
+                letter is 'C', then freq['C'] becomes two, whereas every other frequencies are still one. Then the both
+                parties modify the encoding tree accordingly. Then the second letter will be encoded and decoded, and so
+                on.
+
+            <H1>Arithmetic coding</H1>
+            <P>The original concept of arithmetic coding is proposed by P. Elias. An implementation in C language is
+                described by Witten and others [<A HREF="#ref">10</A>].
+            <P>Although the Huffman coding is optimal if each character must be encoded into a fixed (integer) number of
+                bits, arithmetic coding wins if no such restriction is made.
+            <P>As an example we shall encode "AABA" using arithmetic coding. For simplicity suppose we know beforehand
+                that the probabilities for "A" and "B" to appear in the text are 3/4 and 1/4, respectively.
+            <P>Initially, consider an interval:
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">0 <= x < 1.
+</DIV></PRE>
+            </CENTER>
+
+            <P>Since the first character is "A" whose probability is 3/4, we shrink the interval to the lower 3/4:
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">0 <= x < 3/4.
+</DIV></PRE>
+            </CENTER>
+
+            <P>The next character is "A" again, so we take the lower 3/4:
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">0 <= x < 9/16.
+</DIV></PRE>
+            </CENTER>
+
+            <P>Next comes "B" whose probability is 1/4, so we take the upper 1/4:
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">27/64 <= x < 9/16,
+</DIV></PRE>
+            </CENTER>
+
+            <P>because "B" is the second element in our alphabet, {A, B}. The last character is "A" and the interval is
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">27/64 <= x < 135/256,
+</DIV></PRE>
+            </CENTER>
+
+            <P>which can be written in binary notation
+
+            <P>
+            <CENTER><PRE><DIV CLASS="code">0.011011 <= x < 0.10000111.
+</DIV></PRE>
+            </CENTER>
+
+            <P>Choose from this interval any number that can be represented in fewest bits, say 0.1, and send the bits
+                to the right of "0."; in this case we send only one bit, "1". Thus we have encoded four letters into one
+                bit! With the Huffman coding, four letters could not be encoded into less than four bits.
+            <P>To decode the code "1", we just reverse the process: First, we supply the "0." to the right of the
+                received code "1", resulting in "0.1" in binary notation, or 1/2. Since this number is in the first 3/4
+                of the initial interval 0 <= x < 1, the first character must be "A". Shrink the interval into the lower
+                3/4. In this new interval, the number 1/2 lies in the lower 3/4 part, so the second character is again
+                "A", and so on. The number of letters in the original file must be sent separately (or a special 'EOF'
+                character must be appended at the end of the file).
+            <P>The algorithm described above requires that both the sender and receiver know the probability
+                distribution for the characters. The adaptive version of the algorithm removes this restriction by first
+                supposing uniform or any agreed-upon distribution of characters that approximates the true distribution,
+                and then updating the distribution after each character is sent and received.
+
+            <H1>LZARI</H1>
+            <P>In each step the LZSS algorithm sends either a character or a [position, length] pair. Among these,
+                perhaps character "e" appears more frequently than "x", and a [position, length] pair of length 3 might
+                be commoner than one of length 18, say. Thus, if we encode the more frequent in fewer bits and the less
+                frequent in more bits, the total length of the encoded text will be diminished. This consideration
+                suggests that we use Huffman or arithmetic coding, preferably of adaptive kind, along with LZSS.
+            <P>This is easier said than done, because there are many possible [position, length] combinations. Adaptive
+                compression must keep running statistics of frequency distribution. Too many items make statistics
+                unreliable.
+            <P>What follows is not even an approximate solution to the problem posed above, but anyway this was what I
+                did in the summer of 1988.
+            <P>I extended the character set from 256 to three-hundred or so in size, and let characters 0 through 255 be
+                the usual 8-bit characters, whereas characters 253 + n represent that what follows is a position of
+                string of length n, where n = 3, 4 , .... These extended set of characters will be encoded with adaptive
+                arithmetic compression.
+            <P>I also observed that longest-match strings tend to be the ones that were read relatively recently.
+                Therefore, recent positions should be encoded into fewer bits. Since 4096 positions are too many to
+                encode adaptively, I fixed the probability distribution of the positions "by hand." The distribution
+                function given in the accompanying LZARI.C is rather tentative; it is not based on thorough
+                experimentation. In retrospect, I could encode adaptively the most significant 6 bits, say, or perhaps
+                by some more ingenious method adapt the parameters of the distribution function to the running
+                statistics.
+            <P>At any rate, the present version of LZARI treats the positions rather separately, so that the overall
+                compression is by no means optimal. Furthermore, the string length threshold above which strings are
+                coded into [position, length] pairs is fixed, but logically its value must change according to the
+                length of the [position, length] pair we would get.
+
+            <H1>LZHUF</H1>
+            <P>LZHUF, the algorithm of Haruyasu Yoshizaki's archiver LHarc, replaces LZARI's adaptive arithmetic coding
+                with adaptive Huffman. LZHUF encodes the most significant 6 bits of the position in its 4096-byte buffer
+                by table lookup. More recent, and hence more probable, positions are coded in less bits. On the other
+                hand, the remaining 6 bits are sent verbatim. Because Huffman coding encodes each letter into a fixed
+                number of bits, table lookup can be easily implemented.
+            <P>Though theoretically Huffman cannot exceed arithmetic compression, the difference is very slight, and
+                LZHUF is fairly fast.
+            <P>The accompanying file LZHUF.C was written by Yoshizaki. I translated the comments into English and made a
+                few trivial changes to make it conform to the ANSI C standard.
+
+                <A NAME="ref"><H1>References</H1></A>
+            <DL COMPACT>
+                <DT>[1]
+                <DD>J. Ziv and A. Lempel, IEEE Trans. IT-23, 337-343 (1977).
+                <DT>[2]
+                <DD>J. A. Storer and T. G. Szymanski, J. ACM, 29, 928-951 (1982).
+                <DT>[3]
+                <DD>T. C. Bell, IEEE Trans. COM-34, 1176-1182 (1986).
+                <DT>[4]
+                <DD>J. Ziv and A. Lempel, IEEE Trans. IT-24, 530-536 (1978).
+                <DT>[5]
+                <DD>T. A. Welch, Computer, 17, No.6, 8-19 (1984).
+                <DT>[6]
+                <DD>J. A. Storer, Data Compression: Methods and Theory (Computer Science Press, 1988).
+                <DT>[7]
+                <DD>D. A. Huffman, Proc IRE 40, 1098-1101 (1952).
+                <DT>[8]
+                <DD>R. Sedgewick, Algorithms, 2nd ed. (Addison-Wesley, 1988).
+                <DT>[9]
+                <DD>R. G. Gallager, IEEE Trans. IT-24, 668-674 (1978).
+                <DT>[10]
+                <DD>I. E. Witten, R. M. Neal, and J. G. Cleary, Commun. ACM 30, 520-540 (1987).
+
+
+                    <p align="center"><b><a
+                            href="http://archive.gamedev.net/community/forums/topic.asp?key=featart&amp;uid=295&amp;forum_id=35&amp;Topic_Title=Data+Compression+Algorithms+of+LARC+and+LHarc">Discuss
+                        this article in the forums</a></b></p>
+                    <p>
+                        <br><span class="maintext-2">Date this article was posted to GameDev.net: <b>7/16/1999</b>
+<br>(Note that this date does not necessarily correspond to the date the article was written)</span>
+                    <p><b>See Also:</b><br>
+
+                        <a href="../list6d5b.html?categoryid=125">Compression Algorithms </a><br>
+
+                    <p align="center">&copy; 1999-2011 Gamedev.net. All rights reserved. <a
+                            href="../../info/legal.htm#copyright"><u>Terms of Use</u></a> <a
+                            href="../../info/legal.htm#privacy"><u>Privacy Policy</u></a>
+                        <br><span class="maintext-1">Comments? Questions? Feedback? <a href="../../info/faq.html">Click here!</a></span>
+                    </p>
+
+        </td>
+    </tr>
+</table>
+
+
+<!-- start Vibrant Media IntelliTXT Tooltip style sheet -->
+<style type="text/css">
+    .iTt {
+        FONT-FAMILY: Verdana, Arial, Helvetica;
+        FONT-SIZE: 11px;
+        FONT-STYLE: normal;
+        FONT-WEIGHT: normal;
+        COLOR: black;
+        BACKGROUND-COLOR: lightyellow;
+        BORDER: black 1px solid;
+        PADDING: 2px;
+    }
+
+    .iTt a {
+        COLOR: 0000CC;
+    }
+
+    .iTt a:visited {
+        COLOR: 0000CC;
+    }
+
+    .iTt a:hover {
+        COLOR: 6666CC;
+    }
+
+    .iTt TD {
+        COLOR: 999999;
+    }
+</style>
+<!-- end Vibrant Media IntelliTXT style sheet -->
+<!-- start Vibrant Media IntelliTXT script section -->
+<script src="http://gamedev.us.intellitxt.com/intellitxt/front.asp?ipid=1966" type="text/javascript"></script>
+<!-- end Vibrant Media IntelliTXT script section -->
+
+</body>
+</html>

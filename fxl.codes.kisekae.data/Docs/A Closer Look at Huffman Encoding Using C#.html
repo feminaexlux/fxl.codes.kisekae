@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<!-- https://www.carlbelle.com/Articles/Article/2016/Apr/6/ACloserLookAtHuffmanEncodingUsingCSharp/95 -->
+<html>
+<head>
+    <title>A Closer Look at Huffman Encoding Using C# | Articles - carlbelle.com</title>
+    <meta content="Articles about A Closer Look at Huffman Encoding Using C#." name="description"/>
+    <meta content="" name="keywords"/>
+    <meta charset="utf-8"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <link href="/Css/Version1.css" media="screen" rel="stylesheet" type="text/css"/>
+    <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
+</head>
+
+<body>
+
+<div class="LayoutContainer">
+    <div class="Header">
+        <div class="HeaderImage"><a href="/" title="Home - carlbelle.com">CARL.BELLE</a></div>
+        <div class="HeaderLinks">
+            <p>
+                <a class="NoUnderline" href="https://www.github.com/carlyman77" target="_blank" title="GitHub"><span
+                        class="Symbol">&#XE237;</span></a>
+                <a class="NoUnderline" href="https://www.linkedin.com/in/carlyman77" target="_blank"
+                   title="LinkedIn"><span class="Symbol">&#XE252;</span></a>
+                <a class="NoUnderline" href="https://www.twitter.com/carlbelle" target="_blank" title="Twitter"><span
+                        class="Symbol">&#XE286;</span></a>
+                <a class="NoUnderline" href="https://instagram.com/carlyman77" target="_blank" title="Instagram"><span
+                        class="Symbol">&#XE300;</span></a>
+                <a class="NoUnderline" href="https://open.spotify.com/artist/2kEspNx7mSo6Oe8BWpkGpj" target="_blank"
+                   title="Spotify"><span class="Symbol">&#XE279;</span></a>
+                <a class="NoUnderline" href="https://www.youtube.com/channel/UCEen0eKme7kKca_yDS7gDzw" target="_blank"
+                   title="SoundCloud"><span class="Symbol">&#XE299;</span></a>
+                <a class="NoUnderline" href="https://soundcloud.com/carl-belle" target="_blank" title="SoundCloud"><span
+                        class="Symbol">&#XE278;</span></a>
+            </p>
+            <p>
+                <a href="/" title="Home">Home</a> &raquo;
+                <a href="/Articles/Home" title="Articles">Articles</a> &raquo;
+                <a href="/QSharp" title="QSharp">QSharp</a> &raquo;
+                <a href="/Home/Contact" title="Contact">Contact</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="HorizontalSolidLine"></div>
+    <div class="HorizontalSpacer"></div>
+
+    <div class="Layout">
+
+
+        <h1>A Closer Look at Huffman Encoding Using C#</h1>
+
+        <p>06 Apr 2016
+        <p>
+
+        <p>
+            <a href="/Articles/Category/Algorithms/18" title="Algorithms">Algorithms</a>, <a
+                href="/Articles/Category/CSharp/11" title="C#">C#</a></p>
+
+        <br/>
+
+        <p>On this page:</p>
+        <ul>
+            <li><a href="#HowItWorks">How it Works</a></li>
+            <li><a href="#ConstructingTheBinaryTree">Constructing the Binary Tree</a></li>
+            <li><a href="#EncodingTheData">Encoding the Data</a></li>
+            <li><a href="#UnpackingTheData">Unpacking the Data</a></li>
+            <li><a href="#FinalThoughts">Final Thoughts</a></li>
+            <li><a href="#TheCode">The Code</a></li>
+        </ul>
+
+        <p>Huffman encoding is a compression technique developed by David Huffman and published in his 1952 paper 'A
+            Method for the Construction of Minimum-Redundancy Codes'. The technique centres on encoding characters as a
+            list of code words, which are then used to generate a coded version of the original data. Huffman encoding
+            can be very efficient, and should generally yield compression as low as 20% of the original data size.</p>
+
+        <a name="#HowItWorks"></a>
+        <p><strong>How it Works</strong></p>
+
+        <p>The input data is scanned, and a list of characters and their corresponding weight (the number of instances
+            the character appears in the data). The weights of each character are used to compute the length of the code
+            words that represent that character: larger weights should yield smaller code words, a key aspect of
+            compressing the data. Characters are then arranged into a binary tree, where the resulting layout is used to
+            determine the encoding table. The last step is using the encoding table to create the new file.</p>
+
+        <a name="#ConstructingTheBinaryTree"></a>
+        <p><strong>Constructing the Binary Tree</strong></p>
+
+        <p>Consider the following text:</p>
+        <pre>
+abccccddddddefghijjjjj
+</pre>
+
+        <p>Represented as a list of characters with corresponding weights:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index	Char	Weight 
+0	a	1 
+1	b	1 
+2	c	4 
+3	d	6 
+4	e	1 
+5	f	1 
+6	g	1 
+7	h	1 
+8	i	1 
+9	j	5 
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>This list is now turned into a binary tree. A binary tree is a tree where each node may have a maximum of two
+            child nodes. The left child node is consider the 0 child node, whereas the right child node is considered
+            the 1 child node. The first two nodes are removed from the list, and a new parent node is constructed. This
+            parent node's weight is the combined weight of both children. In our example, after the first iteration our
+            list would look like this:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char	Weight 
+00	null	null	<span class="Comment">//	used to be a</span>
+01	null	null	<span class="Comment">//	used to be b</span>
+02	e	1 
+03	f	1 
+04	g	1 
+05	h	1 
+06	i	1 
+07	c	4 
+08	j	5 
+09	d	6 
+10	a + b	2	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>The next two lowest weight nodes are added to a parent:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char	Weight 
+00	null	null	<span class="Comment">//	used to be a</span>
+01	null	null	<span class="Comment">//	used to be b</span>
+02	null	null	<span class="Comment">//	used to be e</span>
+03	null	null	<span class="Comment">//	used to be f</span>
+04	g	1 
+05	h	1 
+06	i	1 
+07	c	4 
+08	j	5 
+09	d	6 
+10	a + b	2	<span class="Comment">//	new parent node</span>
+11	e + f	2	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>And so on. At the end of this round of processing, the list looks like this:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char	Weight 
+00	null	null	<span class="Comment">//	used to be a</span>
+01	null	null	<span class="Comment">//	used to be b</span>
+02	null	null	<span class="Comment">//	used to be e</span>
+03	null	null	<span class="Comment">//	used to be f</span>
+04	null	null	<span class="Comment">//	used to be g</span>
+05	null	null	<span class="Comment">//	used to be h</span>
+06	null	null	<span class="Comment">//	used to be i</span>
+07	null	null	<span class="Comment">//	used to be c</span>
+08	null	null	<span class="Comment">//	used to be j</span>
+09	null	null	<span class="Comment">//	used to be d</span>
+10	a + b	2	<span class="Comment">//	new parent node</span>
+11	e + f	2	<span class="Comment">//	new parent node</span>
+12	g + h	2	<span class="Comment">//	new parent node</span>
+13	i + c	5	<span class="Comment">//	new parent node</span>
+14	j + d	11	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>Null nodes are removed from the list:</p>
+        <pre>
+Index 	Char	Weight
+0	a + b	2
+1	e + f	2
+2	g + h	2
+3	i + c	5
+4	j + d	11
+</pre>
+
+        <p>And the next round of processing begins, always taking the smallest weighted nodes and combining them under a
+            new parent. At the end of the next round of processing, the list looks like this:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char			Weight 
+0	null			null	<span class="Comment">//	a + b</span>
+1	null			null	<span class="Comment">//	e + f</span>
+2	null			null	<span class="Comment">//	g + h</span>
+3	null			null	<span class="Comment">//	i + c</span>
+4	j + d			11 
+5	a + b (2), e + f (2)	4	<span class="Comment">//	new parent node</span>
+6	g + h (2), i + c (5)	7	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>Null nodes are removed from the list:</p>
+        <pre>
+Index 	Char			Weight
+0	a + b (2), e + f (2)	4
+1	g + h (2), i + c (5)	7
+2	j + d			11
+</pre>
+
+        <p>At the end of the next round of processing:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char					Weight 
+0	null					4	<span class="Comment">//	a + b (2), e + f (2)</span>
+1	null					7	<span class="Comment">//	g + h (2), i + c (5)	</span>
+2	j + d					11	<span class="Comment">//	new parent node</span>
+3	(a + b, e + f) - (4), (g + h, i + c) - (7)	11	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>After removing null nodes from the list, we are ready for the final round of processing:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char						Weight  
+0	j + d						11	<span class="Comment">//	new parent node</span>
+1	(a + b, e + f) - (4), (g + h, i + c) - (7)	11	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>And finally, after all processing, there is only one node left:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index 	Char							Weight  
+0	(j + d) - 11, (a + b, e + f, g + h, i + c) - (11)	22	<span class="Comment">//	new parent node</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>This final node forms the root of the tree, and is used to generate a list of binary words that represent
+            each character. Starting at the root of the tree, following a left child node inserts a 0 into the binary
+            word, following a right child node inserts a 1 into the binary word. Using this method, the following list
+            of binary words is created:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Char	Weight	BinaryWord	Int32Word  
+j	5	00		0		<span class="Comment">//	This column is for sorting purposes only</span>
+d	6	01		1  
+a	1	1000		8  
+b	1	1001		9  
+e	1	1010		10  
+f	1	1011		11  
+g	1	1100		12  
+h	1	1101		13  
+I	1	1110		14  
+c	4	1111		15  
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>Note that nodes without a character value are not present in this list, but are able to be inferred from the
+            list sorting operations. For the moment, I'll leave you to construct the tree using the information
+            above.</p>
+
+        <a name="#EncodingTheData"></a>
+        <p><strong>Encoding the Data</strong></p>
+
+        <p>The next step is to encode the original data using the binary words created from the previous steps. Moving
+            forward through the data one byte at a time, each character is used to perform a lookup for its
+            corresponding binary word. This binary word is added into a binary word buffer. When the binary word buffer
+            reaches sufficient length, 8 values are read off and removed to construct a new byte. Consider the
+            following:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index	Char	BinaryWord	ByteBuffer 
+00	a	1000		<span class="Comment">//	Only 4 bits here, not enough for a new byte</span>
+01	b	1001		<span class="Comment">//	Combined with the previous entry, there are enough bits here for a new byte: 10001001 => 137, remove 8 entries from the buffer</span>
+02 	c	1111		<span class="Comment">//	Start a new byte using these 4 bits</span>
+03	c	1111		<span class="Comment">//	11111111 => 255</span>
+04	c	1111		<span class="Comment">//	Start a new byte</span>
+05	c	1111		<span class="Comment">//	11111111 => 255</span>
+06	d	01		<span class="Comment">//	Start a new byte</span>
+07	d	01		<span class="Comment">//	0101 - the buffer is only half full</span>
+08	d	01		<span class="Comment">//	010101</span>
+09	d	01		<span
+                class="Comment">//	01010101 => 85 - note that this one byte actually represents 4 chars!</span>
+10	d	01		<span class="Comment">//	Start a new byte</span>
+11	d	01		<span class="Comment">//	0101</span>
+12	e	1010		<span class="Comment">//	01011010 => 90 - this one byte represents 3 chars</span>
+13	f	1011		<span class="Comment">//	Start a new byte</span>
+14	g	1100		<span class="Comment">//	10111100 => 188</span>
+15	h	1101		<span class="Comment">//	New byte</span>
+16	i	1110		<span class="Comment">//	11011110 => 222</span>
+17	j	00		<span class="Comment">//	New byte</span>
+18	j	00		<span class="Comment">//	0000</span>
+19	j	00		<span class="Comment">//	000000</span>
+20	j	00		<span class="Comment">//	00000000 => 0</span>
+21	j	00		<span class="Comment">//	Start a new byte</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>With the processing of the final character, the byte buffer only contains 2 values, which is not enough to
+            construct a byte, however as the binary word is 00 it is simply converted to 0. Therefore, the final byte to
+            be constructed is 0. Processing of these 22 characters has yielded a list containing only 9 bytes, about 41%
+            of the original data size.</p>
+
+        <a name="#UnpackingTheData"></a>
+        <p><strong>Unpacking the Data</strong></p>
+
+        <p>Decompression (in this example at least) is relatively straight forward. The byte list is read, and each byte
+            converted into a binary word, which is added into a buffer. If the buffer is less than 8 values, then it is
+            'fixed' (more on that later). Reading each bit from the binary word indicates which path to take through the
+            binary tree (constructed above): starting at the root node, follow the left child for a 0 value, and follow
+            the right for a 1 value. The entire decompression process for the above data:</p>
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+Index	Byte			Characters	  
+0	137 =&gt; 10001001		a, b  
+1	255 =&gt; 11111111		c, c  
+2	255 =&gt; 11111111		c, c  
+3	85  =&gt; 01010101		d, d, d, d  
+4	90  =&gt; 01011010		d, d, e  
+5	188 =&gt; 10111100		f, g  
+6	222 =&gt; 11011110		h, i  
+7	0   =&gt; 00000000		j, j, j, j  
+8	0   => 00		j		<span class="Comment">//	This is the last value, so rather than pad it out, we can just go directly to the char value</span>
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>The output data now contains 22 characters, the data has been successfully unpacked.</p>
+
+        <a name="#FinalThoughts"></a>
+        <p><strong>Final Thoughts</strong></p>
+
+        <p>Conveniently, this example ignores completely the size of the encoding table, as well as how storage and
+            retrieval mechanisms, so theoretically 9 bytes is probably as small as we can get. If this compressed data
+            were to be used outside this example, then the binary tree and code words would also need to be stored along
+            with the byte list in order to unpack the data at some other time.</p>
+
+        <a name="#TheCode"></a>
+        <p><strong>The Code</strong></p>
+
+        <p>I've included my somewhat rambling encoding and decoding process, in C# below.</p>
+
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+<span class="Keyword">public</span> <span class="Keyword">class</span> <span class="Type">HuffmanCompressor</span> 
+{ 
+    <span class="Keyword">private</span> <span class="Type">HuffmanNode</span> oRootHuffmanNode; 
+    <span class="Keyword">private</span> <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt; oValueHuffmanNodes; 
+
+    <span class="Keyword">private</span> <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt; BuildBinaryTree(<span
+                class="Keyword">string</span> Value) 
+    { 
+        <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt; oHuffmanNodes = GetInitialNodeList(); 
+
+        <span class="Comment">//  Update node weights</span>
+        Value.ToList().ForEach(m =&gt; oHuffmanNodes[m].Weight++); 
+
+        <span class="Comment">//  Select only nodes that have a weight</span>
+        oHuffmanNodes = oHuffmanNodes 
+            .Where(m =&gt; (m.Weight &gt; 0)) 
+            .OrderBy(m =&gt; (m.Weight)) 
+            .ThenBy(m =&gt; (m.Value)) 
+            .ToList(); 
+
+        <span class="Comment">//  Assign parent nodes</span>
+        oHuffmanNodes = UpdateNodeParents(oHuffmanNodes); 
+
+        oRootHuffmanNode = oHuffmanNodes[0]; 
+        oHuffmanNodes.Clear(); 
+
+        <span class="Comment">//  Sort nodes into a tree</span>
+        SortNodes(oRootHuffmanNode, oHuffmanNodes); 
+
+        <span class="Keyword">return</span> oHuffmanNodes; 
+    } 
+
+    <span class="Keyword">public</span> <span class="Keyword">void</span> Compress(<span class="Keyword">string</span> FileName) 
+    { 
+        <span class="Type">FileInfo</span> oFileInfo = <span class="Keyword">new</span> <span
+                class="Type">FileInfo</span>(FileName); 
+
+        <span class="Keyword">if</span> (oFileInfo.Exists == <span class="Keyword">true</span>) 
+        { 
+            <span class="Keyword">string</span> sFileContents = <span class="Literal">""</span>; 
+
+            <span class="Keyword">using</span> (<span class="Type">StreamReader</span> oStreamReader = <span
+                class="Keyword">new</span> <span class="Type">StreamReader</span>(<span class="Type">File</span>.OpenRead(FileName))) 
+            { 
+                sFileContents = oStreamReader.ReadToEnd(); 
+            } 
+
+            <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt; oHuffmanNodes = BuildBinaryTree(sFileContents); 
+
+            <span class="Comment">//  Filter to nodes we care about</span>
+            oValueHuffmanNodes = oHuffmanNodes 
+                .Where(m =&gt; (m.Value.HasValue == <span class="Keyword">true</span>)) 
+                .OrderBy(m => (m.BinaryWord))   <span
+                class="Comment">//  Not really required, for presentation purposes</span>
+                .ToList(); 
+
+            <span class="Comment">//  Construct char to binary word dictionary for quick value to binary word resolution</span>
+            <span class="Type">Dictionary</span>&lt;char, <span class="Keyword">string</span>&gt; oCharToBinaryWordDictionary = <span
+                class="Keyword">new</span> <span class="Type">Dictionary</span>&lt;char, <span
+                class="Keyword">string</span>&gt;(); 
+            <span class="Keyword">foreach</span> (<span class="Type">HuffmanNode</span> oHuffmanNode <span
+                class="Keyword">in</span> oValueHuffmanNodes) 
+            { 
+                oCharToBinaryWordDictionary.Add(oHuffmanNode.Value.Value, oHuffmanNode.BinaryWord); 
+            } 
+
+            <span class="Type">StringBuilder</span> oStringBuilder = <span class="Keyword">new</span> <span
+                class="Type">StringBuilder</span>(); 
+            <span class="Type">List</span>&lt;<span class="Keyword">byte</span>&gt; oByteList = <span class="Keyword">new</span> <span
+                class="Type">List</span>&lt;<span class="Keyword">byte</span>&gt;(); 
+            <span class="Keyword">for</span> (<span class="Keyword">int</span> i = 0; i &lt; sFileContents.Length; i++) 
+            { 
+                <span class="Keyword">string</span> sWord = <span class="Literal">""</span>; 
+
+                <span class="Comment">//  Append the binary word value using the char located at the current file position</span>
+                oStringBuilder.Append(oCharToBinaryWordDictionary[sFileContents[i]]); 
+
+                <span class="Comment">//  Once we have at least 8 chars, we can construct a byte</span>
+                <span class="Keyword">while</span> (oStringBuilder.Length &gt;= 8) 
+                { 
+                    sWord = oStringBuilder.ToString().Substring(0, 8); 
+
+                    <span class="Comment">//  Remove the word to be constructed from the buffer</span>
+                    oStringBuilder.Remove(0, sWord.Length); 
+                } 
+
+                <span class="Comment">//  Convert the word and add it onto the list</span>
+                <span class="Keyword">if</span> (<span class="Type">String</span>.IsNullOrEmpty(sWord) == <span
+                class="Keyword">false</span>) 
+                { 
+                    oByteList.Add(Convert.ToByte(sWord, 2)); 
+                } 
+            } 
+
+            <span class="Comment">//  If there is anything in the buffer, make sure it is retrieved</span>
+            <span class="Keyword">if</span> (oStringBuilder.Length &gt; 0) 
+            { 
+                <span class="Keyword">string</span> sWord = oStringBuilder.ToString(); 
+
+                <span class="Comment">//  Convert the word and add it onto the list</span>
+                <span class="Keyword">if</span> (<span class="Type">String</span>.IsNullOrEmpty(sWord) == <span
+                class="Keyword">false</span>) 
+                { 
+                    oByteList.Add(Convert.ToByte(sWord, 2)); 
+                } 
+            } 
+
+            <span class="Comment">//  Write compressed file</span>
+            <span class="Keyword">string</span> sCompressedFileName = Path.Combine(oFileInfo.Directory.FullName, <span
+                class="Type">String</span>.Format(<span class="Literal">"{0}.compressed"</span>, oFileInfo.Name.Replace(oFileInfo.Extension, <span
+                class="Literal">""</span>))); 
+            <span class="Keyword">if</span> (<span class="Type">File</span>.Exists(sCompressedFileName) == <span
+                class="Keyword">true</span>) 
+            { 
+                <span class="Type">File</span>.Delete(sCompressedFileName); 
+            } 
+
+            <span class="Keyword">using</span> (<span class="Type">FileStream</span> oFileStream = <span class="Type">File</span>.OpenWrite(sCompressedFileName)) 
+            { 
+                oFileStream.Write(oByteList.ToArray(), 0, oByteList.Count); 
+            } 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Keyword">void</span> Decompress(<span class="Keyword">string</span> FileName) 
+    { 
+        <span class="Type">FileInfo</span> oFileInfo = <span class="Keyword">new</span> <span
+                class="Type">FileInfo</span>(FileName); 
+
+        <span class="Keyword">if</span> (oFileInfo.Exists == <span class="Keyword">true</span>) 
+        { 
+            <span class="Keyword">string</span> sCompressedFileName = <span class="Type">String</span>.Format(<span
+                class="Literal">"{0}.compressed"</span>, oFileInfo.FullName.Replace(oFileInfo.Extension, <span
+                class="Literal">""</span>)); 
+
+            <span class="Keyword">byte</span>[] oBuffer = <span class="Keyword">null</span>; 
+            <span class="Keyword">using</span> (<span class="Type">FileStream</span> oFileStream = <span class="Type">File</span>.OpenRead(sCompressedFileName)) 
+            { 
+                oBuffer = <span class="Keyword">new</span> <span class="Keyword">byte</span>[oFileStream.Length]; 
+                oFileStream.Read(oBuffer, 0, oBuffer.Length); 
+            } 
+
+            <span class="Comment">//  Find the zero node</span>
+            <span class="Type">HuffmanNode</span> oZeroHuffmanNode = oRootHuffmanNode; 
+            <span class="Keyword">while</span> (oZeroHuffmanNode.Left != <span class="Keyword">null</span>) 
+            { 
+                oZeroHuffmanNode = oZeroHuffmanNode.Left; 
+            } 
+
+            <span class="Comment">//  Unpack the file contents</span>
+            <span class="Type">HuffmanNode</span> oCurrentHuffmanNode = <span class="Keyword">null</span>; 
+            <span class="Type">StringBuilder</span> oStringBuilder = <span class="Keyword">new</span> <span
+                class="Type">StringBuilder</span>(); 
+
+            <span class="Keyword">for</span> (<span class="Keyword">int</span> i = 0; i &lt; oBuffer.Length; i++) 
+            { 
+                <span class="Keyword">string</span> sBinaryWord = <span class="Literal">""</span>; 
+                <span class="Keyword">byte</span> oByte = oBuffer[i]; 
+
+                <span class="Keyword">if</span> (oByte == 0) 
+                { 
+                    sBinaryWord = oZeroHuffmanNode.BinaryWord; 
+                } 
+                <span class="Keyword">else</span> 
+                { 
+                    sBinaryWord = Convert.ToString(oByte, 2); 
+                } 
+
+                <span class="Keyword">if</span> ((sBinaryWord.Length &lt; 8) && (i &lt; (oBuffer.Length - 1))) 
+                { 
+                    <span class="Comment">//  Pad binary word out to 8 places</span>
+                    <span class="Type">StringBuilder</span> oBinaryStringBuilder = <span
+                class="Keyword">new</span> <span class="Type">StringBuilder</span>(sBinaryWord); 
+                    <span class="Keyword">while</span> (oBinaryStringBuilder.Length &lt; 8) 
+                    { 
+                        oBinaryStringBuilder.Insert(0, <span class="Literal">"0"</span>); 
+                    } 
+
+                    sBinaryWord = oBinaryStringBuilder.ToString(); 
+                } 
+
+                <span class="Comment">//  Use the binary word to navigate the tree looking for the value</span>
+                <span class="Keyword">for</span> (<span class="Keyword">int</span> j = 0; j &lt; sBinaryWord.Length; j++) 
+                { 
+                    <span class="Keyword">char</span> cValue = sBinaryWord[j]; 
+
+                    <span class="Keyword">if</span> (oCurrentHuffmanNode == <span class="Keyword">null</span>) 
+                    { 
+                        oCurrentHuffmanNode = oRootHuffmanNode; 
+                    } 
+
+                    <span class="Keyword">if</span> (cValue == '0') 
+                    { 
+                        oCurrentHuffmanNode = oCurrentHuffmanNode.Left; 
+                    } 
+                    <span class="Keyword">else</span> 
+                    { 
+                        oCurrentHuffmanNode = oCurrentHuffmanNode.Right; 
+                    } 
+
+                    <span class="Keyword">if</span> ((oCurrentHuffmanNode.Left == <span class="Keyword">null</span>) && (oCurrentHuffmanNode.Right == <span
+                class="Keyword">null</span>)) 
+                    { 
+                        <span class="Comment">//  No more child nodes to choose from, so this must be a value node</span>
+                        oStringBuilder.Append(oCurrentHuffmanNode.Value.Value); 
+                        oCurrentHuffmanNode = <span class="Keyword">null</span>; 
+                    } 
+                } 
+            } 
+
+            <span class="Comment">//  Write out file</span>
+            <span class="Keyword">string</span> sUncompressedFileName = Path.Combine(oFileInfo.Directory.FullName, <span
+                class="Type">String</span>.Format(<span class="Literal">"{0}.uncompressed"</span>, oFileInfo.Name.Replace(oFileInfo.Extension, <span
+                class="Literal">""</span>))); 
+
+            <span class="Keyword">if</span> (<span class="Type">File</span>.Exists(sUncompressedFileName) == <span
+                class="Keyword">true</span>) 
+            { 
+                <span class="Type">File</span>.Delete(sUncompressedFileName); 
+            } 
+
+            <span class="Keyword">using</span> (<span class="Type">StreamWriter</span> oStreamWriter = <span
+                class="Keyword">new</span> <span class="Type">StreamWriter</span>(<span class="Type">File</span>.OpenWrite(sUncompressedFileName))) 
+            { 
+                oStreamWriter.Write(oStringBuilder.ToString()); 
+            } 
+        } 
+    } 
+
+    <span class="Keyword">private</span> <span class="Keyword">static</span> <span class="Type">List</span>&lt;<span
+                class="Type">HuffmanNode</span>&gt; GetInitialNodeList() 
+    { 
+        <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt; oGetInitialNodeList = <span
+                class="Keyword">new</span> <span class="Type">List</span>&lt;<span class="Type">HuffmanNode</span>&gt;(); 
+
+        <span class="Keyword">for</span> (<span class="Keyword">int</span> i = Char.MinValue; i &lt; Char.MaxValue; i++) 
+        { 
+            oGetInitialNodeList.Add(<span class="Keyword">new</span> <span class="Type">HuffmanNode</span>((<span
+                class="Keyword">char</span>)(i))); 
+        } 
+
+        <span class="Keyword">return</span> oGetInitialNodeList; 
+    } 
+
+    <span class="Keyword">private</span> <span class="Keyword">static</span> <span class="Keyword">void</span> SortNodes(<span
+                class="Type">HuffmanNode</span> Node, <span class="Type">List</span>&lt;<span
+                class="Type">HuffmanNode</span>&gt; Nodes) 
+    { 
+        <span class="Keyword">if</span> (Nodes.Contains(Node) == <span class="Keyword">false</span>) 
+        { 
+            Nodes.Add(Node); 
+        } 
+
+        <span class="Keyword">if</span> (Node.Left != <span class="Keyword">null</span>) 
+        { 
+            SortNodes(Node.Left, Nodes); 
+        } 
+
+        <span class="Keyword">if</span> (Node.Right != <span class="Keyword">null</span>) 
+        { 
+            SortNodes(Node.Right, Nodes); 
+        } 
+    } 
+
+    <span class="Keyword">private</span> <span class="Keyword">static</span> <span class="Type">List</span>&lt;<span
+                class="Type">HuffmanNode</span>&gt; UpdateNodeParents(<span class="Type">List</span>&lt;<span
+                class="Type">HuffmanNode</span>&gt; Nodes) 
+    { 
+        <span class="Comment">//  Assign parent nodes</span>
+        <span class="Keyword">while</span> (Nodes.Count &gt; 1) 
+        { 
+            <span class="Keyword">int</span> iOperations = (Nodes.Count / 2); 
+            <span class="Keyword">for</span> (<span class="Keyword">int</span> iOperation = 0, i = 0, j = 1; iOperation &lt; iOperations; iOperation++, i += 2, j += 2) 
+            { 
+                <span class="Keyword">if</span> (j &lt; Nodes.Count) 
+                { 
+                    <span class="Type">HuffmanNode</span> oParentHuffmanNode = <span class="Keyword">new</span> <span
+                class="Type">HuffmanNode</span>(Nodes[i], Nodes[j]); 
+                    Nodes.Add(oParentHuffmanNode); 
+
+                    Nodes[i] = <span class="Keyword">null</span>; 
+                    Nodes[j] = <span class="Keyword">null</span>; 
+                } 
+            } 
+
+            <span class="Comment">//  Remove null nodes</span>
+            Nodes = Nodes 
+                .Where(m =&gt; (m != <span class="Keyword">null</span>)) 
+                .OrderBy(m => (m.Weight))   <span class="Comment">//  Choose the lowest weightings first</span>
+                .ToList(); 
+        } 
+
+        <span class="Keyword">return</span> Nodes; 
+    } 
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>Here's the code for the HuffmanNode type itself:</p>
+
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+<span class="Keyword">public</span> <span class="Keyword">class</span> <span class="Type">HuffmanNode</span> 
+{ 
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span>() 
+    { 
+    } 
+
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span>(<span class="Keyword">char</span> Value) 
+    { 
+        cValue = Value; 
+    } 
+
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span>(<span class="Type">HuffmanNode</span> Left, <span
+                class="Type">HuffmanNode</span> Right) 
+    { 
+        oLeft = Left; 
+        oLeft.oParent = <span class="Keyword">this</span>; 
+        oLeft.bIsLeftNode = <span class="Keyword">true</span>; 
+
+        oRight = Right; 
+        oRight.oParent = <span class="Keyword">this</span>; 
+        oRight.bIsRightNode = <span class="Keyword">true</span>; 
+
+        iWeight = (oLeft.Weight + oRight.Weight); 
+    } 
+
+    <span class="Keyword">private</span> <span class="Keyword">string</span> sBinaryWord; 
+    <span class="Keyword">private</span> <span class="Keyword">bool</span> bIsLeftNode; 
+    <span class="Keyword">private</span> <span class="Keyword">bool</span> bIsRightNode; 
+    <span class="Keyword">private</span> <span class="Type">HuffmanNode</span> oLeft; 
+    <span class="Keyword">private</span> <span class="Type">HuffmanNode</span> oParent; 
+    <span class="Keyword">private</span> <span class="Type">HuffmanNode</span> oRight; 
+    <span class="Keyword">private</span> <span class="Keyword">char</span>? cValue; 
+    <span class="Keyword">private</span> <span class="Keyword">int</span> iWeight; 
+
+    <span class="Keyword">public</span> <span class="Keyword">string</span> BinaryWord 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">string</span> sReturnValue = <span class="Literal">""</span>; 
+
+            <span class="Keyword">if</span> (<span class="Type">String</span>.IsNullOrEmpty(sBinaryWord) == <span
+                class="Keyword">true</span>) 
+            { 
+                <span class="Type">StringBuilder</span> oStringBuilder = <span class="Keyword">new</span> <span
+                class="Type">StringBuilder</span>(); 
+
+                <span class="Type">HuffmanNode</span> oHuffmanNode = <span class="Keyword">this</span>; 
+
+                <span class="Keyword">while</span> (oHuffmanNode != <span class="Keyword">null</span>) 
+                { 
+                    <span class="Keyword">if</span> (oHuffmanNode.bIsLeftNode == <span class="Keyword">true</span>) 
+                    { 
+                        oStringBuilder.Insert(0, <span class="Literal">"0"</span>); 
+                    } 
+
+                    <span class="Keyword">if</span> (oHuffmanNode.bIsRightNode == <span class="Keyword">true</span>) 
+                    { 
+                        oStringBuilder.Insert(0, <span class="Literal">"1"</span>); 
+                    } 
+
+                    oHuffmanNode = oHuffmanNode.oParent; 
+                } 
+
+                sReturnValue = oStringBuilder.ToString(); 
+                sBinaryWord = sReturnValue; 
+            } 
+            <span class="Keyword">else</span> 
+            { 
+                sReturnValue = sBinaryWord; 
+            } 
+
+            <span class="Keyword">return</span> sReturnValue; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span> Left 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">return</span> oLeft; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span> Parent 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">return</span> oParent; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Type">HuffmanNode</span> Right 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">return</span> oRight; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Keyword">char</span>? Value 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">return</span> cValue; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Keyword">int</span> Weight 
+    { 
+        <span class="Keyword">get</span> 
+        { 
+            <span class="Keyword">return</span> iWeight; 
+        } 
+        <span class="Keyword">set</span> 
+        { 
+            iWeight = <span class="Keyword">value</span>; 
+        } 
+    } 
+
+    <span class="Keyword">public</span> <span class="Keyword">override</span> <span class="Keyword">string</span> ToString() 
+    { 
+        <span class="Type">StringBuilder</span> oStringBuilder = <span class="Keyword">new</span> <span class="Type">StringBuilder</span>(); 
+
+        <span class="Keyword">if</span> (cValue.HasValue == <span class="Keyword">true</span>) 
+        { 
+            oStringBuilder.AppendFormat(<span class="Literal">"'{0}' ({1}) - {2} ({3})"</span>, cValue.Value, iWeight, BinaryWord, BinaryWord.BinaryStringToInt32()); 
+        } 
+        <span class="Keyword">else</span> 
+        { 
+            <span class="Keyword">if</span> ((oLeft != <span class="Keyword">null</span>) && (oRight != <span
+                class="Keyword">null</span>)) 
+            { 
+                <span class="Keyword">if</span> ((oLeft.Value.HasValue == <span class="Keyword">true</span>) && (oRight.Value.HasValue == <span
+                class="Keyword">true</span>)) 
+                { 
+                    oStringBuilder.AppendFormat(<span class="Literal">"{0} + {1} ({2})"</span>, oLeft.Value, oRight.Value, iWeight); 
+                } 
+                <span class="Keyword">else</span> 
+                { 
+                    oStringBuilder.AppendFormat(<span class="Literal">"{0}, {1} - ({2})"</span>, oLeft, oRight, iWeight); 
+                } 
+            } 
+            <span class="Keyword">else</span> 
+            { 
+                oStringBuilder.Append(iWeight); 
+            } 
+        } 
+
+        <span class="Keyword">return</span> oStringBuilder.ToString(); 
+    } 
+} 
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>And finally, an extension method that is also required for the code to compile:</p>
+
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+<span class="Keyword">public</span> <span class="Keyword">static</span> <span class="Keyword">int</span> BinaryStringToInt32(<span
+                class="Keyword">this</span> <span class="Keyword">string</span> Value) 
+{ 
+    <span class="Keyword">int</span> iBinaryStringToInt32 = 0; 
+
+    <span class="Keyword">for</span> (<span class="Keyword">int</span> i = (Value.Length - 1), j = 0; i &gt;= 0; i--, j++) 
+    { 
+        iBinaryStringToInt32 += ((Value[j] == '0' ? 0 : 1) * (<span class="Keyword">int</span>)(<span
+                class="Type">Math</span>.Pow(2, i))); 
+    } 
+
+    <span class="Keyword">return</span> iBinaryStringToInt32; 
+} 
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>To get this code running, it will need to be stitched together, perhaps in a console application:</p>
+
+        <!--	BEGIN AUTO FORMAT		-->
+        <pre>
+
+<span class="Keyword">public</span> <span class="Keyword">static</span> <span class="Keyword">void</span> Main(<span
+                class="Keyword">string</span>[] Arguments) 
+{ 
+    <span class="Type">HuffmanCompressor</span> oHuffmanCompressor = <span class="Keyword">new</span> <span
+                class="Type">HuffmanCompressor</span>(); 
+    oHuffmanCompressor.Compress(<span class="Literal">"Huffman.txt"</span>); 
+    <span class="Type">Console</span>.WriteLine(); 
+    oHuffmanCompressor.Decompress(<span class="Literal">"Huffman.txt"</span>); 
+    <span class="Type">Console</span>.WriteLine(); 
+} 
+</pre>
+
+        <!--	END AUTO FORMAT		-->
+
+
+        <p>Note that for this example, decompression is only possible if the binary tree has been constructed, i,e., the
+            data has already been compressed.</p>
+
+        <br/>
+
+        <p>&nbsp;</p>
+
+    </div>
+
+    <div class="HorizontalSpacer"></div>
+    <div class="HorizontalSolidLine"></div>
+
+    <p align="center">Copyright &copy; 2024 <a href="/" title="carlbelle.com">carlbelle.com</a></p>
+
+    <div class="HorizontalSpacer"></div>
+
+</div>
+
+<script type="text/javascript">
+
+    var sGuid = '3C9AAA06-9031-4B3E-8AFE-586AE8F6E17F';
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-26910229-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function () {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+    })();
+
+</script>
+
+</body>
+</html>
