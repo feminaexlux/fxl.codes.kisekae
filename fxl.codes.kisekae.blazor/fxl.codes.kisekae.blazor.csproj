@@ -7,11 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj" />
+        <ProjectReference Include="..\fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Services\" />
+        <Folder Include="temp\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.8"/>
     </ItemGroup>
 
 </Project>

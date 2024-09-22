@@ -1,7 +1,75 @@
-﻿@page "/"
+﻿@page "/{configId:int?}"
+@using System.Diagnostics
+@using fxl.codes.kisekae.data
+@using fxl.codes.kisekae.data.Entities
+@inject KisekaeContext Context
+@inject IWebHostEnvironment Environment
+@rendermode InteractiveServer
 
 <PageTitle>Kisekae</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (ConfigId.HasValue)
+{
+    <h1>@Current!.Name</h1>
+}
+else
+{
+    <h1>Existing Sets</h1>
+    <ul>
+        @foreach (var set in AllConfigurations)
+        {
+            <li>@set.Name</li>
+        }
+    </ul>
+}
 
-Welcome to your new app.
+<label>Upload file: <InputFile OnChange="Unzip"/></label>
+
+@code {
+    [Parameter] public int? ConfigId { get; set; }
+
+    private IEnumerable<Configuration> AllConfigurations { get; set; } = ArraySegment<Configuration>.Empty;
+    private Configuration? Current { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        if (ConfigId.HasValue)
+        {
+            Current = Context.Configurations.Find(ConfigId.Value);
+        }
+        else
+        {
+            AllConfigurations = Context.Configurations.ToArray();
+        }
+
+        return base.OnInitializedAsync();
+    }
+
+    private async Task Unzip(InputFileChangeEventArgs upload)
+    {
+        var path = Path.Combine(Environment.ContentRootPath, "temp");
+        if (!Directory.Exists(path)) throw new Exception("temp directory doesn't exist");
+
+        var filename = Path.Combine(path, upload.File.Name);
+        var directory = Path.Combine(path, Path.GetFileNameWithoutExtension(upload.File.Name));
+        if (!File.Exists(filename))
+        {
+            await using var stream = new FileStream(filename, FileMode.Create);
+            await upload.File.OpenReadStream().CopyToAsync(stream);
+            await stream.FlushAsync();
+            stream.Close();
+        }
+
+        if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+        if (!Directory.GetFiles(directory).Any())
+        {
+            var processName = OperatingSystem.IsWindows() ? "7z.exe" : OperatingSystem.IsMacOS() ? "7zz" : "7zzl";
+            var args = $"\"{Path.Combine(".", "Libraries", processName)}\" x {filename} -o\"{directory}\"";
+
+            var process = Process.Start(processName, args);
+            await process.WaitForExitAsync();
+        }
+    }
+
+}

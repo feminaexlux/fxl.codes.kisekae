@@ -19,27 +19,4 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Libraries\"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Libraries\7z.dll"/>
-        <Resource Include="Libraries\7z.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Resource>
-        <None Remove="Libraries\7z.exe"/>
-        <Resource Include="Libraries\7z.exe">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Resource>
-        <None Remove="Libraries\7zz"/>
-        <Resource Include="Libraries\7zz">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Resource>
-        <None Remove="Libraries\7zzl"/>
-        <Resource Include="Libraries\7zzl">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Resource>
-    </ItemGroup>
-
 </Project>
