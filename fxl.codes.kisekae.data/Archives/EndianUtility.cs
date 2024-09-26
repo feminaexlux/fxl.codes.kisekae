@@ -6,7 +6,7 @@ internal static class EndianUtility
 {
     public static int ToLittleEndian(this ReadOnlySpan<byte> bytes)
     {
-        var x = BitConverter.ToInt32(bytes);
+        var x = bytes.Length == 2 ? BitConverter.ToInt16(bytes) : BitConverter.ToInt32(bytes);
         return BitConverter.IsLittleEndian ? x : BinaryPrimitives.ReverseEndianness(x);
     }
 

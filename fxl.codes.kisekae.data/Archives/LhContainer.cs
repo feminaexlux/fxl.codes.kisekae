@@ -1,19 +1,20 @@
 using System.Text;
 
-namespace fxl.codes.kisekae.data.Archives.LhHeaders;
+namespace fxl.codes.kisekae.data.Archives;
 
-internal class LhHeader
+internal class LhContainer
 {
-    public LhHeader(ref readonly Stream stream)
+    public LhContainer(ref readonly Stream stream)
     {
+        HeaderDataPosition = stream.Position;
         var bytes = new byte[21];
-        stream.Position = 0;
         stream.ReadExactly(bytes);
 
         var span = bytes.AsSpan();
         Level = span[20];
         MethodId = Encoding.ASCII.GetString(span[2..7]);
         CompressedSize = EndianUtility.ToLittleEndian(span[7..11]);
+        CompressedFile = new byte[CompressedSize];
         UncompressedSize = EndianUtility.ToLittleEndian(span[11..15]);
         Created = EndianUtility.ToDateTime(span[15..19]);
         FileOrDirectory = span[19];
@@ -36,7 +37,7 @@ internal class LhHeader
     public int HeaderSize { get; private set; }
     public int HeaderCheckSum { get; private set; }
     public string MethodId { get; private set; }
-    public int CompressedSize { get; private set; }
+    public int CompressedSize { get; }
     public int UncompressedSize { get; private set; }
     public DateTime Created { get; private set; }
     public int FileOrDirectory { get; private set; }
@@ -45,25 +46,33 @@ internal class LhHeader
 
     public string? FileName { get; private set; }
 
+    public long HeaderDataPosition { get; }
     public long FileDataPosition { get; private set; }
+    public byte[] CompressedFile { get; }
 
     private void Level0(ReadOnlySpan<byte> span, ref readonly Stream stream)
     {
         HeaderSize = span[0];
         HeaderCheckSum = span[1];
-        stream.Position = span.Length;
         FileName = GetFilename(in stream);
         Crc16 = (short)stream.ReadLittleEndian(2);
 
         FileDataPosition = stream.Position;
+        stream.ReadExactly(CompressedFile);
     }
 
     private void Level1(ReadOnlySpan<byte> span, ref readonly Stream stream)
     {
-        Level0(span, in stream);
+        HeaderSize = span[0];
+        HeaderCheckSum = span[1];
+        FileName = GetFilename(in stream);
+        Crc16 = (short)stream.ReadLittleEndian(2);
         OperatingSystem = (char)stream.ReadByte();
+
         SetExtendedHeaders(in stream);
+
         FileDataPosition = stream.Position;
+        stream.ReadExactly(CompressedFile);
     }
 
     private void Level2(ReadOnlySpan<byte> span, ref readonly Stream stream)
@@ -71,8 +80,11 @@ internal class LhHeader
         HeaderSize = span[..2].ToLittleEndian();
         Crc16 = (short)stream.ReadLittleEndian(2);
         OperatingSystem = (char)stream.ReadByte();
+
         SetExtendedHeaders(in stream);
+
         FileDataPosition = stream.Position;
+        stream.ReadExactly(CompressedFile);
     }
 
     private static string GetFilename(ref readonly Stream stream)

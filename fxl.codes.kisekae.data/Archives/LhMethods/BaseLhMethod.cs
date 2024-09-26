@@ -1,29 +1,32 @@
 using fxl.codes.kisekae.data.Archives.Algorithms;
-using fxl.codes.kisekae.data.Archives.LhHeaders;
 
 namespace fxl.codes.kisekae.data.Archives.LhMethods;
 
-internal abstract class BaseLhMethod(ref readonly Stream stream, LhHeader header, int slidingWindowBytes, int matchingWindowBytes, IAlgorithm? algorithm)
+internal abstract class BaseLhMethod(LhContainer container, int slidingWindowBytes, int matchingWindowBytes, IAlgorithm? algorithm)
 {
     public int SlidingWindow => slidingWindowBytes * 1024;
+
+    public void InitializeAlgorithm()
+    {
+    }
 }
 
-internal class Lzs(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 2, 17, null);
+internal class Lzs(LhContainer container) : BaseLhMethod(container, 2, 17, null);
 
-internal class Lz4(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 0, 0, null);
+internal class Lz4(LhContainer container) : BaseLhMethod(container, 0, 0, null);
 
-internal class Lh0(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 0, 0, null);
+internal class Lh0(LhContainer container) : BaseLhMethod(container, 0, 0, null);
 
-internal class Lh1(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 4, 60, new HuffmanDynamic());
+internal class Lh1(LhContainer container) : BaseLhMethod(container, 4, 60, new HuffmanDynamic());
 
-internal class Lh2(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 8, 256, new HuffmanDynamic());
+internal class Lh2(LhContainer container) : BaseLhMethod(container, 8, 256, new HuffmanDynamic());
 
-internal class Lh3(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 8, 256, new HuffmanStatic());
+internal class Lh3(LhContainer container) : BaseLhMethod(container, 8, 256, new HuffmanStatic());
 
-internal class Lh4(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 4, 256, new HuffmanStatic());
+internal class Lh4(LhContainer container) : BaseLhMethod(container, 4, 256, new HuffmanStatic());
 
-internal class Lh5(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 8, 256, new HuffmanStatic());
+internal class Lh5(LhContainer container) : BaseLhMethod(container, 8, 256, new HuffmanStatic());
 
-internal class Lh6(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 32, 256, new HuffmanStatic());
+internal class Lh6(LhContainer container) : BaseLhMethod(container, 32, 256, new HuffmanStatic());
 
-internal class Lh7(ref readonly Stream stream, LhHeader header) : BaseLhMethod(in stream, header, 64, 256, new HuffmanStatic());
+internal class Lh7(LhContainer container) : BaseLhMethod(container, 64, 256, new HuffmanStatic());

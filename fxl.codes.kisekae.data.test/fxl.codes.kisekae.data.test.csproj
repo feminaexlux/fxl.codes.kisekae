@@ -23,4 +23,19 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+        <Folder Include="Examples\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Examples\2RANMAS.lzh"/>
+        <EmbeddedResource Include="Examples\2RANMAS.lzh">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj"/>
+    </ItemGroup>
+
 </Project>
