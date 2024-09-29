@@ -42,9 +42,23 @@ public class LhContainerTests
                     Assert.That(file.MethodId, Is.Not.Null, "Method id is {0}", file.MethodId);
                     Assert.That(file.MethodId, Does.StartWith("-l"));
                     Assert.That(file.MethodId, Does.EndWith("-"));
-                    Console.WriteLine($"Archive name: {file.FileName}, compression method: {file.MethodId}");
+                    Console.WriteLine($"Archive name: {file.FileName}, compression method: {file.MethodId}, file at {file.FileDataPosition}");
                 }
             });
+        }
+    }
+
+    [Test]
+    public void TestBody()
+    {
+        foreach (var resource in _resourceNames)
+        {
+            using var stream = _assembly.GetManifestResourceStream(resource);
+            if (stream == null) continue;
+
+            var files = LhCodecService.GetFiles(in stream);
+            foreach (var file in files)
+                Assert.Multiple(() => { Assert.That(file.CompressedFile, Is.Not.Null); });
         }
     }
 }

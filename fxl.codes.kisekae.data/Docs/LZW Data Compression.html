@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<!-- https://marknelson.us/posts/2011/11/08/lzw-revisited -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="https://marknelson.us/assets/favicon/favicon.ico?v=1" rel="shortcut icon" type="image/x-icon"/>
+    <link href="https://marknelson.us/assets/favicon//favicon.ico?v=1" rel="icon" type="image/x-icon"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-152-22678.png?v=1"
+          rel="apple-touch-icon-precomposed"/>
+    <meta content="#ffffff" name="msapplication-TileColor"/>
+    <meta content="https://marknelson.us/assets/favicon/iconmonitoring-144-22678.png?v=1"
+          name="msapplication-TileImage"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-152-22678.png?v=1" rel="apple-touch-icon-precomposed"
+          sizes="152x152"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-144-22678.png?v=1" rel="apple-touch-icon-precomposed"
+          sizes="144x144"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-120-22678.png?v=1" rel="apple-touch-icon-precomposed"
+          sizes="120x120"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-114-22678.png?v=1" rel="apple-touch-icon-precomposed"
+          sizes="114x114"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-72-22678.png?v=1" rel="apple-touch-icon-precomposed"
+          sizes="72x72"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-57-22678.png?v=1"
+          rel="apple-touch-icon-precomposed"/>
+    <link href="https://marknelson.us/assets/favicon/iconmonitoring-32-22678.png?v=1" rel="icon" sizes="32x32"/>
+    <!-- Begin Jekyll SEO tag v2.5.0 -->
+    <title>LZW Data Compression Revisited | Mark Nelson</title>
+    <meta content="Jekyll v3.8.3" name="generator"/>
+    <meta content="LZW Data Compression Revisited" property="og:title"/>
+    <meta content="Mark Nelson" name="author"/>
+    <meta content="en_US" property="og:locale"/>
+    <meta content="This article tells you how the LZW data compression algorithm works, then describes the C++ sample code that I use to implement the algorithm. I’ll walk you through the use of the algorithm with a few varieties of I/O. Finally, I’ll show you some benchmarks. (This is an update to my 1989 article on the same topic.)"
+          name="description"/>
+    <meta content="This article tells you how the LZW data compression algorithm works, then describes the C++ sample code that I use to implement the algorithm. I’ll walk you through the use of the algorithm with a few varieties of I/O. Finally, I’ll show you some benchmarks. (This is an update to my 1989 article on the same topic.)"
+          property="og:description"/>
+    <link href="https://marknelson.us/posts/2011/11/08/lzw-revisited.html" rel="canonical"/>
+    <meta content="https://marknelson.us/posts/2011/11/08/lzw-revisited.html" property="og:url"/>
+    <meta content="Mark Nelson" property="og:site_name"/>
+    <meta content="https://marknelson.us/assets/images/compress.png" property="og:image"/>
+    <meta content="article" property="og:type"/>
+    <meta content="2011-11-08T19:30:00+00:00" property="article:published_time"/>
+    <script type="application/ld+json">
+        {
+            "headline": "LZW Data Compression Revisited",
+            "dateModified": "2018-08-12T20:00:00+00:00",
+            "datePublished": "2011-11-08T19:30:00+00:00",
+            "@type": "BlogPosting",
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": "https://marknelson.us/posts/2011/11/08/lzw-revisited.html"
+            },
+            "image": "https://marknelson.us/assets/images/compress.png",
+            "publisher": {
+                "@type": "Organization",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://marknelson.us/assets/about/mugshot.jpg"
+                },
+                "name": "Mark Nelson"
+            },
+            "author": {
+                "@type": "Person",
+                "name": "Mark Nelson"
+            },
+            "url": "https://marknelson.us/posts/2011/11/08/lzw-revisited.html",
+            "description": "This article tells you how the LZW data compression algorithm works, then describes the C++ sample code that I use to implement the algorithm. I’ll walk you through the use of the algorithm with a few varieties of I/O. Finally, I’ll show you some benchmarks. (This is an update to my 1989 article on the same topic.)",
+            "@context": "http://schema.org"
+        }</script>
+    <!-- End Jekyll SEO tag -->
+    <link href="/assets/main.css" rel="stylesheet">
+    <link href="https://marknelson.us/feed.xml" rel="alternate" title="Mark Nelson" type="application/atom+xml"/>
+</head>
+<body>
+<header class="site-header" role="banner">
+
+    <div class="wrapper"><a class="site-title" href="/" rel="author">Mark Nelson</a>
+        <nav class="site-nav">
+            <input class="nav-trigger" id="nav-trigger" type="checkbox"/>
+            <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg height="15px" viewBox="0 0 18 15" width="18px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+            </label>
+
+            <div class="trigger"><a class='page-link' href='/pages/about'>About</a><a class='page-link'
+                                                                                      href='/pages/books'>Books</a><a
+                    class='page-link' href='/pages/license'>Licensing</a><a class='page-link' href='/pages/tags'>Categories</a><a
+                    class='page-link' href='/pages/search'>Search</a></div>
+        </nav>
+    </div>
+</header>
+<main aria-label="Content" class="page-content">
+    <div class="wrapper">
+        <article class="post h-entry">
+
+            <header class="post-header">
+                <h1 class="post-title p-name" itemprop="name headline">LZW Data Compression Revisited</h1>
+                <p class="post-meta">
+                    <time class="dt-published" datetime="2011-11-08T19:30:00+00:00" itemprop="datePublished">Nov 8, 2011
+                    </time>
+                </p>
+            </header>
+
+            <div class="post-content e-content" itemprop="articleBody">
+                <p>One of the first articles I wrote for Dr. Dobb’s Journal,
+                    <a href='/posts/1989/10/01/lzw-data-compression' target='_blank'>LZW Data Compression</a>
+                    turned out to be very popular, and still generates a fair amount of traffic and email over twenty
+                    years later.</p>
+
+                <p>One of the reasons for its popularity seems to be that LZW compression is a popular homework
+                    assignment for CS students around the world. And that audience sometimes found the article to be
+                    bit of a struggle. My code was modeled on the UNIX
+                    <a href="https://en.wikipedia.org/wiki/Compress" target="_blank">compress program</a>,
+                    which was written in terse C for maximum efficiency. And sometimes optimization comes at the
+                    expense of comprehension.</p>
+
+                <p>By using C++ data structures I can model the algorithm in a much more straightforward way - the
+                    language doesn’t get in the way of a clear implementation. And after 20 years of answering puzzled
+                    queries I think I can improve on the overall explanation of just how LZW works.</p>
+
+                <p>In this updated look at LZW, I will first give a description of how LZW works, then describe the
+                    core C++ code that I use to implement the algorithm. I’ll then walk you through the use of the
+                    algorithm with a few varieties of I/O. Finally, I’ll show you some benchmarks.</p>
+
+                <p>I’m hoping that this version of the article will be good enough to last for another 20 years.</p>
+                <h4>LZW Basics</h4>
+
+                <p>LZW compression works by reading a sequence of <em>symbols</em>, grouping the symbols into
+                    <em>strings</em>, and converting the strings into <em>codes</em>. Because the codes take up less
+                    space than the strings they replace, we get compression.</p>
+
+                <p>My implementation of LZW uses the C++ <code>char</code> as its symbol type, the C++
+                    <code>std::string</code> as its string type, and <code>unsigned int</code> as its code type.<br/>
+                    The tables of codes and strings are implemented using <code>unordered_map</code>, the C++
+                    library’s hash table data structure. By using the native types and standard library
+                    data structures the representation in the program is straightforward and easy to follow.</p>
+
+                <h4>Encoding/Decoding</h4>
+
+                <p>Rather than jumping directly into a full implementation, I’m going to work my way up to LZW one step
+                    at a time.</p>
+
+                <p>The first step is getting a clear understanding of how the encoding and decoding process works.
+                    As I said earlier, LZW compression converts strings of symbols into integer codes. Decompression
+                    converts codes back into strings, returning the same text that we started with.</p>
+
+                <p>LZW is a greedy algorithm - it tries to find the longest possible string that it has a code for,
+                    then outputs that string. The code below is not quite LZW, but it shows you the basic idea of how
+                    a greedy encoder can work:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="kt">void</span> <span class="nf">encode</span><span class="p">(</span> <span class="n">input_stream</span> <span
+                        class="n">in</span><span class="p">,</span> <span class="n">output_stream</span> <span
+                        class="n">out</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">//</span>
+  <span class="c1">// This hash table contains a list of codes, indexed</span>
+  <span class="c1">// by the string that corresponds to the code.</span>
+  <span class="c1">//</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span
+                            class="p">,</span><span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="o">&gt;</span> <span class="n">codes</span><span class="p">;</span>
+  <span class="c1">//</span>
+  <span class="c1">// There is presumably some code here that initializes</span>
+  <span class="c1">// the dictionary with a set of codes based on whatever</span>
+  <span class="c1">// algorithm we are implementing.</span>
+  <span class="c1">//</span>
+  <span class="p">...</span><span class="n">initialize</span> <span class="n">the</span> <span
+                            class="n">dictionary</span>
+  <span class="c1">//</span>
+  <span class="c1">// With codes in the dictionary, encoding is </span>
+  <span class="c1">// now ready to begin.</span>
+  <span class="c1">//</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">current_string</span><span
+                            class="p">;</span>
+  <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">c</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">current_string</span> <span class="o">=</span> <span class="n">current_string</span> <span
+                            class="o">+</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">codes</span><span class="p">.</span><span
+                            class="n">find</span><span class="p">(</span><span class="n">current_string</span><span
+                            class="p">)</span> <span class="o">==</span> <span class="n">codes</span><span
+                            class="p">.</span><span class="n">end</span><span class="p">()</span> <span
+                            class="p">)</span> <span class="p">{</span>
+      <span class="n">current_string</span><span class="p">.</span><span class="n">erase</span><span
+                            class="p">(</span><span class="n">current_string</span><span class="p">.</span><span
+                            class="n">size</span><span class="p">()</span><span class="o">-</span><span
+                            class="mi">1</span><span class="p">);</span>
+      <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span
+                            class="p">[</span><span class="n">current_string</span><span class="p">];</span>
+      <span class="n">current_string</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span class="p">[</span><span
+                            class="n">current_string</span><span class="p">];</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>The greedy encoder reads characters in from the uncompressed stream, and appends them one by one
+                    to the variable <code>current_string</code>. Each time it lengthens the string by one character,
+                    it checks to see if it still has a valid code for that string in the dictionary.</p>
+
+                <p>This continues until we eventually add a character that forms a string that isn’t in the dictionary.
+                    So we then erase the last character from that string, and issue the code for the resulting string -
+                    the string from the previous pass through the loop.</p>
+
+                <p>The value of <code>current_string</code> is then initialized with the character that broke the
+                    camel’s back, and the algorithm continues in the loop, building new strings until it runs out of
+                    input characters. At that point it outputs the last remaining code and exits.</p>
+
+                <p>As an example of how this would work, imagine I have the input stream <code>ACABCA</code>, and my
+                    code dictionary looks like this:</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <td>String</td>
+                            <td>Code</td>
+                        </tr>
+                        <tr>
+                            <td>A</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>B</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>C</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td>AB</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>ABC</td>
+                            <td>5</td>
+                        </tr>
+                    </table>
+                </center>
+                <center><b>A sample dictionary</b></center>
+                <p/>
+
+                <p>If you follow the algorithm above, you’ll see that the code output has to be <code>1 3 5 1</code>.
+                    If this wasn’t a greedy algorithm, <code>1 3 4 3 1</code> would have been another valid output.</p>
+
+                <p>Decoding the stream in a system like this is very straightforward:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="kt">void</span> <span class="nf">decode</span><span class="p">(</span> <span class="n">input_stream</span> <span
+                        class="n">in</span><span class="p">,</span> <span class="n">output_stream</span> <span
+                        class="n">out</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="p">,</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="o">&gt;</span> <span class="n">strings</span><span
+                            class="p">;</span>
+  <span class="c1">//</span>
+  <span class="c1">// Initialize the code table with the same set of codes and strings </span>
+  <span class="c1">// that the encoder used for your algorithm.</span>
+  <span class="c1">//</span>
+  <span class="p">...</span><span class="n">initialize</span> <span class="n">the</span> <span
+                            class="n">dictionary</span>
+  <span class="c1">//</span>
+  <span class="c1">// With codes in the dictionary, decoding is now </span>
+  <span class="c1">// ready to begin.</span>
+  <span class="c1">//</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">code</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">code</span> <span class="p">)</span> 
+    <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">strings</span><span
+                            class="p">[</span><span class="n">code</span><span class="p">];</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>Remember, the decoder shown above is just a hypothetical sample - we’re still working our way up
+                    to the full LZW decoder.</p>
+
+                <h4>The LZW Encoder</h4>
+
+                <p>The encoder shown above works okay, but there is one missing ingredient: management of the code
+                    dictionary. If you think about it, you’ll see that we only achieve reasonable compression when we
+                    are able to build up longer strings and find them in the dictionary. Building a useful dictionary
+                    is referred to in the data compression world as <em>modeling</em>.</p>
+
+                <p>But our management of the dictionary is constrained by an important requirement: the encoder and
+                    decoder both have to be working with the same copy of the dictionary. If they have different
+                    dictionaries, the encoder might send a string that the decoder can’t resolve.</p>
+
+                <p>Some data compression algorithms solve this problem by using a predefined dictionary that both the
+                    encoder and the decoder know in advance. But LZW builds a dictionary on the fly, using an
+                    <em>adaptive</em> method that ensures both the encoder and decoder are in sync.</p>
+
+                <p>LZW manages this in an effective and provably correct fashion. First, both the encoder and decoder
+                    initialize the dictionary with all possible single digit strings. For the compressor, that looks
+                    like this:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">for</span> <span class="p">(</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                        class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span
+                        class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span
+                        class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span class="o">++</span> <span
+                        class="p">)</span>
+    <span class="n">codes</span><span class="p">[</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="p">(</span><span class="mi">1</span><span
+                            class="p">,(</span><span class="kt">char</span><span class="p">)</span><span
+                            class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span
+                            class="n">i</span><span class="p">;</span></code></pre>
+                </figure>
+
+                <p>This insures that we can encode all possible streams. No matter what, we can always break a stream
+                    down into single digits and encode these, knowing that the decoder has the same strings in its
+                    dictionary with values 0-255.</p>
+
+                <p>Then comes the key component of the LZW algorithm. If you go back to the greedy encoding loop
+                    above, you’ll see that I keep adding input symbols to a string until I find a string that isn’t in
+                    the dictionary. This string has the characteristic of being composed of a string that currently
+                    exists in the dictionary, with one additional character.</p>
+
+                <p>LZW then takes that new string and adds it to the dictionary, creating a new code. The strings are
+                    added to the table with code values that increment by one with each new entry.</p>
+
+                <p>The resulting code is just a slightly modified version of the encoder that I listed above. It
+                    still only outputs codes for values that are in the dictionary, but now the dictionary is being
+                    updated with a new string every time an existing code is sent:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="kt">void</span> <span class="nf">compress</span><span class="p">(</span> <span class="n">input_stream</span> <span
+                        class="n">in</span><span class="p">,</span> <span class="n">output_stream</span> <span
+                        class="n">out</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span
+                            class="p">,</span><span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="o">&gt;</span> <span class="n">codes</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span
+                            class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span
+                            class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span
+                            class="o">++</span> <span class="p">)</span>
+    <span class="n">codes</span><span class="p">[</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="p">(</span><span class="mi">1</span><span
+                            class="p">,(</span><span class="kt">char</span><span class="p">)</span><span
+                            class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span
+                            class="n">i</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">next_code</span> <span class="o">=</span> <span
+                            class="mi">257</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">current_string</span><span
+                            class="p">;</span>
+  <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">c</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">current_string</span> <span class="o">=</span> <span class="n">current_string</span> <span
+                            class="o">+</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">codes</span><span class="p">.</span><span
+                            class="n">find</span><span class="p">(</span><span class="n">current_string</span><span
+                            class="p">)</span> <span class="o">==</span> <span class="n">codes</span><span
+                            class="p">.</span><span class="n">end</span><span class="p">()</span> <span
+                            class="p">)</span> <span class="p">{</span>
+      <span class="n">codes</span><span class="p">[</span> <span class="n">current_string</span> <span
+                            class="p">]</span> <span class="o">=</span> <span class="n">next_code</span><span class="o">++</span><span
+                            class="p">;</span>
+      <span class="n">current_string</span><span class="p">.</span><span class="n">erase</span><span
+                            class="p">(</span><span class="n">current_string</span><span class="p">.</span><span
+                            class="n">size</span><span class="p">()</span><span class="o">-</span><span
+                            class="mi">1</span><span class="p">);</span>
+      <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span
+                            class="p">[</span><span class="n">current_string</span><span class="p">];</span>
+      <span class="n">current_string</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span class="p">[</span><span
+                            class="n">current_string</span><span class="p">];</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>The code above constitutes a more or less complete LZW encoder. I’ve only made a couple of
+                    additions to the previous encoder:</p>
+
+                <ul>
+                    <li/>
+                    The initialization of codes 0-255 with all possible single character strings.
+                    <li/>
+                    The insertion of the newly discovered string into the string table, generating a new code.
+                </ul>
+
+                <p>(One item of note in this code: you might wonder why <code>next_code</code> is initialized to 257,
+                    when 256 is the first free code. This is because I reserve code 256 for an EOF marker. More on
+                    this in a later section.)</p>
+
+                <p>Just to make sure this all adds up, I’ll walk through the steps the encoder takes as it processes a
+                    string from a simple two letter alphabet: <code>ABBABBBABBA</code>. There are a lot of steps shown
+                    below, but working through the process in detail is a great way to be sure you understand
+                    it:</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <th>Input<br/>Symbol</th>
+                            <th>Action(s)</th>
+                            <th>New<br/>Code</th>
+                            <th>Output<br/>Code</th>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'A'<br/>'A' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'AB'<br/>'AB' is not in the dictionary, add it with
+                                code 257<br/>output the code for 'A' - 65<br/>set current_string to 'B'
+                            </td>
+                            <td valign="top">257 (AB)</td>
+                            <td valign="top">65 (A)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'BB'<br/>'BB' is not in the dictionary, add it with
+                                code 258<br/>output the code for 'B' - 66<br/>set current_string to 'B'
+                            </td>
+                            <td valign="top">258 (BB)</td>
+                            <td valign="top">66 (B)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'BA'<br/>'BA' is not in the dictionary - add it with
+                                code 259<br/>output the code for 'B' - 66<br/>set current_string to 'A'
+                            </td>
+                            <td valign="top">259 (BA)</td>
+                            <td valign="top">66 (B)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'AB'<br/>'AB' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'ABB'<br/>'ABB' is not in the dictionary - add it with
+                                code 260<br/>output the code for 'AB' - 257<br/>set current_string to 'B'
+                            </td>
+                            <td valign="top">260 (ABB)</td>
+                            <td valign="top">257 (AB)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'BB'<br/>'BB' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'BBA'<br/>'BBA' is not in the dictionary - add it with
+                                code 261<br/>output the code for 'BB' - 258<br/>set current_string to 'A'
+                            </td>
+                            <td valign="top">261 (BBA)</td>
+                            <td valign="top">258 (BB)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'AB'<br/>'AB' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'ABB'<br/>'ABB' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'ABBA'<br/>'ABBA' is not in the dictionary - add it
+                                with code 262<br/>output the code for 'ABB' - 260<br/>set current_string to 'A'
+                            </td>
+                            <td valign="top">262 (ABBA)</td>
+                            <td valign="top">260 (ABB)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>EOF</center>
+                            </td>
+                            <td>end of the input stream - exit loop<br/>current string is 'A'<br/>output the code for
+                                'A' - 65
+                            </td>
+                            <td>&nbsp;</td>
+                            <td>65 (A)</td>
+                        </tr>
+                    </table>
+                </center>
+
+                <p>After processing string <code>ABBABBBABBA</code>, the output codes are <code>
+                    65,66,66,257,258,260,65</code>.
+                    The dictionary at this point is:</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <td>String</td>
+                            <td>Code</td>
+                        </tr>
+                        <tr>
+                            <td>AB</td>
+                            <td>257</td>
+                        </tr>
+                        <tr>
+                            <td>BB</td>
+                            <td>258</td>
+                        </tr>
+                        <tr>
+                            <td>BA</td>
+                            <td>259</td>
+                        </tr>
+                        <tr>
+                            <td>ABB</td>
+                            <td>260</td>
+                        </tr>
+                        <tr>
+                            <td>BBA</td>
+                            <td>261</td>
+                        </tr>
+                        <tr>
+                            <td>ABBA</td>
+                            <td>262</td>
+                        </tr>
+                    </table>
+                    <b>The dictionary generated for <code>ABBABBBABBA</code><br/>(Entries 0-255 not shown for
+                        brevity)</b>
+                </center>
+
+                <p>Looking at the above table, you can see a few interesting things happening. First, every time the
+                    algorithm outputs a code, it also adds a new code to the dictionary.</p>
+
+                <p>More importantly, as the dictionary grows, it starts to hold longer and longer strings. And the
+                    longer the string, the the more compression we can get. If the algorithm starts emitting integer
+                    codes for strings of length 10 or more, there is no doubt that we are going to get good
+                    compression.</p>
+
+                <p>As an example of how this works on real data, here are some entries from the dictionary created
+                    when compressing <em>Alice’s Adventures in Wonderland</em>:</p>
+
+                <pre>
+34830 : 'even\n'
+34831 : '\nwith t'
+34832 : 'the dr'
+34833 : 'ream '
+34834 : ' of Wo'
+34835 : 'onderl'
+34836 : 'land'
+34837 : 'd of l'
+34838 : 'long ag'
+34839 : 'go:'
+</pre>
+
+                <p>These strings have an average length of almost six characters. If we are writing the integer codes
+                    to a file using 16 bit binary integers, these entries offer the possibility of 3:1 compression.</p>
+
+                <p>The word <em>adaptive</em> is used to describe a compression algorithm that adapts to the type of
+                    text it is processing. LZW does an excellent job of this. If a string is seen repeatedly in the
+                    text, it will show up in longer and longer entries in the dictionary. If a string is seen rarely,
+                    it will not be the foundation for a large batch of longer strings, and thus won’t waste space in
+                    the dictionary.</p>
+
+                <h4>The LZW Decoder</h4>
+
+                <p>The change made to the basic encoder to accommodate the LZW algorithm was really very simple.
+                    One small batch of code that initializes the dictionary, and another few lines of code to add
+                    every new unseen string to the dictionary.</p>
+
+                <p>As you might suspect, the changes to the decoder will be fairly simple as well. The first change
+                    is that the dictionary must be initialized with the same 256 single-symbol strings that the
+                    encoder uses.</p>
+
+                <p>Once the decoder starts running, each time it reads in a code, it must add a new value to the
+                    dictionary. And what is that value? The entire content of the previously decoded string, plus the
+                    first letter of the currently decoded string. This is exactly what the encoder does to create a
+                    new string, and the decoder must following the same steps:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="kt">void</span> <span class="nf">decompress</span><span class="p">(</span> <span
+                        class="n">input_stream</span> <span class="n">in</span><span class="p">,</span> <span class="n">output_stream</span> <span
+                        class="n">out</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="p">,</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="o">&gt;</span> <span class="n">strings</span><span
+                            class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span> <span class="kt">int</span> <span class="kt">unsigned</span> <span
+                            class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span
+                            class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span
+                            class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span
+                            class="o">++</span> <span class="p">)</span>
+    <span class="n">strings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span
+                            class="o">=</span> <span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="p">(</span><span class="mi">1</span><span
+                            class="p">,</span><span class="n">i</span><span class="p">);</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span
+                            class="n">previous_string</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">code</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">next_code</span> <span class="o">=</span> <span
+                            class="mi">257</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">code</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">strings</span><span
+                            class="p">[</span><span class="n">code</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">previous_string</span><span
+                            class="p">.</span><span class="n">size</span><span class="p">()</span> <span
+                            class="p">)</span>
+      <span class="n">strings</span><span class="p">[</span><span class="n">next_code</span><span
+                            class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span>
+    <span class="n">previous_string</span> <span class="o">=</span> <span class="n">strings</span><span
+                            class="p">[</span><span class="n">code</span><span class="p">];</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>I won’t do a walk-through of the the decoder - you should be able to take the codes output from
+                    the encoder, shown above, and run them through the decoder to see that the output stream is what
+                    we expect.</p>
+
+                <p>The important thing is to understand the logic behind the decoder. When the encoder encounters a
+                    string that isn’t in the dictionary, it breaks it into two pieces: a root string and an appended
+                    character. It outputs the code for the root string, and adds the root string + appended character
+                    to the dictionary. It then starts building a new string that starts with the appended character.</p>
+
+                <p>So every time the decoder uses a code to extract a string from the dictionary, it knows that the
+                    first character in that string was the appended character of the string just added to the
+                    dictionary by the encoder. And the root of the string added to the dictionary? That was the
+                    <em>previously</em> decoded string. This line of code implements that logic:</p>
+
+                <figure class="highlight">
+                    <pre><code class="language-c--" data-lang="c++">    <span class="n">strings</span><span
+                            class="p">[</span><span class="n">next_code</span><span class="o">++</span><span
+                            class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span></code></pre>
+                </figure>
+
+                <p>It adds a new string to the dictionary, composed of the previously seen string, and the first
+                    character of the current string. Thus, the decoder is adding strings to the dictionary just one
+                    step behind the encoder.</p>
+
+                <p>You might note one curious point in the decoder. Instead of always adding the string to the
+                    dictionary, it is only done conditionally:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">if</span> <span class="p">(</span> <span class="n">previous_string</span><span
+                        class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="p">)</span>
+  <span class="n">strings</span><span class="p">[</span><span class="n">next_code</span><span class="o">++</span><span
+                            class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span></code></pre>
+                </figure>
+
+                <p>The only time that <code>previous_string.size()</code> is 0 is on the very first pass through the
+                    loop. And on the first pass through the loop, we don’t have a previous string yet, so the decoder
+                    can’t build a new dictionary entry. Again, the decoder is always one step behind the encoder,
+                    which is a key point in the next section, which puts the final touches on the algorithm.</p>
+
+                <h4>The Catch</h4>
+
+                <p>So far the LZW algorithm we’ve seen seems very elegant - that’s a characteristic we associate with
+                    algorithms that can be expressed in just a few lines of code.</p>
+
+                <p>Unfortunately, there is one small catch in this perceived elegance - the algorithm as I’ve shown
+                    it to you has a bug.</p>
+
+                <p>The bug in the algorithm relates to the fact that the encoder is always one step ahead of the
+                    decoder. When the encoder adds a string with code <em>N</em> to the table, it sends enough
+                    information to the decoder to allow the decoder to figure out the value of the string denoted by
+                    code <em>N-1</em>. The decoder won’t know what the value of the string corresponding to code
+                    <em>N</em> is until it receives code <em>N+1</em>.</p>
+
+                <p>This makes sense if you recall the key line of code from the decoder. It calculates the value of
+                    the string encoded by <em>N-1</em> by looking at the string it received on the previous iteration,
+                    plus the first character of the current string. And that current string is the one that was sent
+                    after encoding <em>N</em>.</p>
+
+                <p>So how can this get us in trouble? The encoder is always one entry ahead of the decoder - it has
+                    entry <em>N</em> in its dictionary, and the decoder has entry <em>N-1</em>. So if the encoder ever
+                    sends code <em>N</em>, the decoder will look in its table and come up empty-handed, unable to do
+                    its job of decoding.</p>
+
+                <p>A simple example will show you how this can happen. Let’s look at the state of the encoder after
+                    it has sent the first five symbols in a stream: <code>ABABA</code>:</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <th>Input<br/>Symbol</th>
+                            <th>Action(s)</th>
+                            <th>New<br/>Code</th>
+                            <th>Output<br/>Code</th>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'A'<br/>'A' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'AB'<br/>'AB' is not in the dictionary, add it with
+                                code 257<br/>output the code for 'A' - 65<br/>set current_string to 'B'
+                            </td>
+                            <td valign="top">257 (AB)</td>
+                            <td valign="top">65 (A)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'BA'<br/>'BA' is not in the dictionary, add it with
+                                code 258<br/>output the code for 'B' - 66<br/>set current_string to 'A'
+                            </td>
+                            <td valign="top">258 (BA)</td>
+                            <td valign="top">66 (B)</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>B</center>
+                            </td>
+                            <td>read 'B' - set current_string to 'AB'<br/>'AB' is in the dictionary, so continue</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <center>A</center>
+                            </td>
+                            <td>read 'A' - set current_string to 'ABA'<br/>'ABA' is not in the dictionary, add it with
+                                code 259<br/>output the code for 'AB' - 257<br/>set current_string to 'A'
+                            </td>
+                            <td valign="top">259 (ABA)</td>
+                            <td valign="top">257 (AB)</td>
+                        </tr>
+                    </table>
+                </center>
+
+                <p>Now we are set for trouble. The encoder has symbol 259 in its dictionary, while the decoder has
+                    only gotten to 258. If the encoder were to send a code of 259 for its next output, the decoder
+                    would not be able to find it in its dictionary. Can this happen?</p>
+
+                <p>Yes, if the next two characters in the stream are <code>BA</code>, the next code output by the
+                    encoder will be 259, and the decoder will be lost.</p>
+
+                <p>In general, this can happen when a dictionary entry exists that consists of a string plus a
+                    character, and the encoder encounters the sequence
+                    <code>string+character+string+character+string</code>.
+                    In the example above, the value of <em>string</em> is <code>A</code>, and the value of
+                    <em>character</em> is <code>B</code>. After the encoder counters <code>AB</code>, it has
+                    <code>string+character</code> in the dictionary, so if the following sequence is
+                    <code>ABABA</code>, we will emit code <em>N</em>. (This can happen at the start of a file, when the
+                    string is empty, if you simply have a string of three identical characters.)</p>
+
+                <p>Whether this is likely to happen or not is not too important, what is important is that it most
+                    definitely can happen, and the decoder has to be aware of it. And it will happen repeatedly in the
+                    pathological case: a stream that consists of a single symbol, repeated on end.</p>
+
+                <p>The good news is that the problem is easily solved. When the decoder receives a code, and finds
+                    that this code is not present in its dictionary, it knows right away that the code must be the one
+                    that it will add next to its decoder. And because this only happens when we are encoding the
+                    sequence discussed above, the decoder knows that instead of using this value for that code:</p>
+
+                <figure class="highlight">
+                    <pre><code class="language-c--" data-lang="c++"><span class="n">strings</span><span
+                            class="p">[</span><span class="n">next_code</span><span class="o">++</span><span
+                            class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span></code></pre>
+                </figure>
+
+                <p>it can instead use this value:</p>
+
+                <figure class="highlight">
+                    <pre><code class="language-c--" data-lang="c++"><span class="n">strings</span><span
+                            class="p">[</span> <span class="n">code</span> <span class="p">]</span> <span
+                            class="o">=</span> <span class="n">previous_string</span> <span class="o">+</span> <span
+                            class="n">previous_string</span><span class="p">[</span><span class="mi">0</span><span
+                            class="p">];</span></code></pre>
+                </figure>
+
+                <p>The result of this is the insertion of just two lines of code at the start of the decompress loop,
+                    giving a loop that now looks like this:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                        class="n">code</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">strings</span><span class="p">.</span><span
+                            class="n">find</span><span class="p">(</span> <span class="n">code</span> <span
+                            class="p">)</span> <span class="o">==</span> <span class="n">strings</span><span
+                            class="p">.</span><span class="n">end</span><span class="p">()</span> <span
+                            class="p">)</span> 
+    <span class="n">strings</span><span class="p">[</span> <span class="n">code</span> <span class="p">]</span> <span
+                            class="o">=</span> <span class="n">previous_string</span> <span class="o">+</span> <span
+                            class="n">previous_string</span><span class="p">[</span><span class="mi">0</span><span
+                            class="p">];</span>
+  <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">strings</span><span class="p">[</span><span
+                            class="n">code</span><span class="p">];</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">previous_string</span><span class="p">.</span><span
+                            class="n">size</span><span class="p">()</span> <span class="p">)</span>
+    <span class="n">strings</span><span class="p">[</span><span class="n">next_code</span><span class="o">++</span><span
+                            class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span>
+  <span class="n">previous_string</span> <span class="o">=</span> <span class="n">strings</span><span class="p">[</span><span
+                            class="n">code</span><span class="p">];</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>And with that, you have a complete implementation of the LZW encoder and decoder.</p>
+
+                <h4>Implementation</h4>
+
+                <p>Now that I’ve shown you the algorithm, the next step is to take that code and add turn it into a
+                    working program. Without changing the algorithm itself, I’m going to take you through four
+                    different customizations that work as follows:</p>
+
+                <ul>
+                    <li/>
+                    LZW-A reads and writes code values rendered in text mode, which is great for debugging. It
+                    means you can view the output of the encoder in a text editor.
+                    <li/>
+                    LZW-B reads and writes code values as 16-bit binary integers. This is fast and efficient,
+                    and usually results in significant data compresion.
+                    <li/>
+                    LZW-C reads and writes code values as N-bit binary integers, where N is determined by the
+                    maximum code size. Performing I/O on codes that are not aligned on byte boundaries complicates
+                    the code somewhat, but allows for greater efficiency and better compression.
+                    <li/>
+                    LZW-D reads and writes code values as variable-length binary integers, starting with 9-bit
+                    codes and gradually increasing as the dictionary grows. This gives the maximum compression.
+                </ul>
+
+                <p>Before launching into these implementations, the code I showed above needs some minor tweaking to
+                    solve a couple of problems.</p>
+
+                <p>The first problem we have to deal with is the ever-expanding dictionary. In the algorithm I’ve
+                    presented, we keep adding new codes to the dictionary without end. This needs to be changed for a
+                    couple of reasons.</p>
+
+                <p>First, we don’t have unlimited memory, so the dictionary simply can’t grow forever. Second,
+                    practical experience shows that compression ratios don’t improve as dictionary sizes grow without
+                    bound. As the dictionary grows, code sizes get larger and larger, and so they take up more space
+                    in the compressed stream, which can reduce compression efficiency.</p>
+
+                <p>To resolve this problem, I just add an additional argument to the encoder and decoder that sets
+                    the maximum code value that will be added to the dictionary. The function signatures now look like
+                    this:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="kt">void</span> <span class="n">compress</span><span class="p">(</span> <span class="n">input_string</span> <span
+                        class="n">input</span><span class="p">,</span> 
+               <span class="n">output_stream</span> <span class="n">output</span><span class="p">,</span> 
+               <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">max_code</span> <span class="o">=</span> <span class="mi">32767</span> <span
+                            class="p">);</span>
+<span class="kt">void</span> <span class="n">decompress</span><span class="p">(</span> <span
+                            class="n">input_string</span> <span class="n">input</span><span class="p">,</span> 
+                 <span class="n">output_stream</span> <span class="n">output</span><span class="p">,</span> 
+                 <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">max_code</span> <span class="o">=</span> <span class="mi">32767</span> <span
+                            class="p">);</span></code></pre>
+                </figure>
+
+                <p>Implementing it means one small change in the encoder:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">if</span> <span class="p">(</span> <span class="n">next_code</span> <span class="o">&lt;=</span> <span
+                        class="n">max_code</span> <span class="p">)</span>
+  <span class="n">codes</span><span class="p">[</span> <span class="n">current_string</span> <span
+                            class="p">]</span> <span class="o">=</span> <span class="n">next_code</span><span class="o">++</span><span
+                            class="p">;</span></code></pre>
+                </figure>
+
+                <p>And a corresponding change in the decoder:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">if</span> <span class="p">(</span> <span class="n">previous_string</span><span
+                        class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span
+                        class="n">next_code</span> <span class="o">&lt;=</span> <span class="n">max_code</span> <span
+                        class="p">)</span>
+  <span class="n">codes</span><span class="p">[</span> <span class="n">current_string</span> <span
+                            class="p">]</span> <span class="o">=</span> <span class="n">next_code</span><span class="o">++</span><span
+                            class="p">;</span></code></pre>
+                </figure>
+
+                <h4>Input and Output</h4>
+
+                <p>Finally, I need to give the algorithm a decent way to perform input and output - and this is where
+                    C++ offers a huge amount of help.</p>
+
+                <p>When writing generic compression code that you intend to use in multiple contexts, one of the more
+                    difficult things to deal with is I/O. People using your code might want to compress data in
+                    memory, stored in files, or streaming in from sockets or other sources. Some input data sources
+                    might be of unknown length (data coming from a TCP socket, for example), while others will be of a
+                    prescribed length. Back in the days of C, it was particularly difficult to make your compression
+                    code both generic, so it would work with all types of data streams, and efficient, so that I/O
+                    doesn’t take any more time than it has to.</p>
+
+                <p>With the advent of C++, we have a new tool that can help in this quest - templates. Templates are
+                    designed to solve this problem in an efficient way, and I take advantage of this in my sample
+                    code. The code below shows the final version of the compressor and decompressor that are are used
+                    in all four versions of the implementation. There are two final changes made to the routines shown
+                    previously. First, both C++ functions are now function templates, parameterized on the the types
+                    being used for input and output. Second, the actual input and output is done through four newly
+                    introduced template classes:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span
+                        class="nc">INPUT</span><span class="p">,</span> <span class="k">class</span> <span class="nc">OUTPUT</span><span
+                        class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">compress</span><span class="p">(</span> <span class="n">INPUT</span> <span
+                            class="o">&amp;</span><span class="n">input</span><span class="p">,</span> <span class="n">OUTPUT</span> <span
+                            class="o">&amp;</span><span class="n">output</span><span class="p">,</span> <span class="k">const</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="n">max_code</span> <span
+                            class="o">=</span> <span class="mi">32767</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">input_symbol_stream</span><span class="o">&lt;</span><span class="n">INPUT</span><span
+                            class="o">&gt;</span> <span class="n">in</span><span class="p">(</span> <span class="n">input</span> <span
+                            class="p">);</span>
+  <span class="n">output_code_stream</span><span class="o">&lt;</span><span class="n">OUTPUT</span><span
+                            class="o">&gt;</span> <span class="n">out</span><span class="p">(</span> <span class="n">output</span><span
+                            class="p">,</span> <span class="n">max_code</span> <span class="p">);</span>
+
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span
+                            class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="o">&gt;</span> <span class="n">codes</span><span class="p">(</span> <span
+                            class="p">(</span><span class="n">max_code</span> <span class="o">*</span> <span class="mi">11</span><span
+                            class="p">)</span><span class="o">/</span><span class="mi">10</span> <span
+                            class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span
+                            class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span
+                            class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span
+                            class="o">++</span> <span class="p">)</span>
+    <span class="n">codes</span><span class="p">[</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="p">(</span><span class="mi">1</span><span
+                            class="p">,</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span
+                            class="n">i</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">next_code</span> <span class="o">=</span> <span
+                            class="mi">257</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">current_string</span><span
+                            class="p">;</span>
+  <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">c</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">current_string</span> <span class="o">=</span> <span class="n">current_string</span> <span
+                            class="o">+</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">codes</span><span class="p">.</span><span
+                            class="n">find</span><span class="p">(</span><span class="n">current_string</span><span
+                            class="p">)</span> <span class="o">==</span> <span class="n">codes</span><span
+                            class="p">.</span><span class="n">end</span><span class="p">()</span> <span
+                            class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">next_code</span> <span
+                            class="o">&lt;=</span> <span class="n">max_code</span> <span class="p">)</span>
+        <span class="n">codes</span><span class="p">[</span> <span class="n">current_string</span> <span
+                            class="p">]</span> <span class="o">=</span> <span class="n">next_code</span><span class="o">++</span><span
+                            class="p">;</span>
+      <span class="n">current_string</span><span class="p">.</span><span class="n">erase</span><span
+                            class="p">(</span><span class="n">current_string</span><span class="p">.</span><span
+                            class="n">size</span><span class="p">()</span><span class="o">-</span><span
+                            class="mi">1</span><span class="p">);</span>
+      <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span
+                            class="p">[</span><span class="n">current_string</span><span class="p">];</span>
+      <span class="n">current_string</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">current_string</span><span class="p">.</span><span
+                            class="n">size</span><span class="p">()</span> <span class="p">)</span>
+    <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">codes</span><span class="p">[</span><span
+                            class="n">current_string</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span
+                            class="nc">INPUT</span><span class="p">,</span> <span class="k">class</span> <span
+                            class="nc">OUTPUT</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">decompress</span><span class="p">(</span> <span
+                            class="n">INPUT</span> <span class="o">&amp;</span><span class="n">input</span><span
+                            class="p">,</span> <span class="n">OUTPUT</span> <span class="o">&amp;</span><span
+                            class="n">output</span><span class="p">,</span> <span class="k">const</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="n">max_code</span> <span
+                            class="o">=</span> <span class="mi">32767</span>  <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">input_code_stream</span><span class="o">&lt;</span><span class="n">INPUT</span><span
+                            class="o">&gt;</span> <span class="n">in</span><span class="p">(</span> <span class="n">input</span><span
+                            class="p">,</span> <span class="n">max_code</span> <span class="p">);</span>
+  <span class="n">output_symbol_stream</span><span class="o">&lt;</span><span class="n">OUTPUT</span><span class="o">&gt;</span> <span
+                            class="n">out</span><span class="p">(</span> <span class="n">output</span> <span class="p">);</span>
+
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span
+                            class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">int</span><span
+                            class="p">,</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="o">&gt;</span> <span class="n">strings</span><span
+                            class="p">(</span> <span class="p">(</span><span class="n">max_code</span> <span
+                            class="o">*</span> <span class="mi">11</span><span class="p">)</span> <span
+                            class="o">/</span> <span class="mi">10</span> <span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span> <span class="kt">int</span> <span class="kt">unsigned</span> <span
+                            class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span
+                            class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span
+                            class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span
+                            class="o">++</span> <span class="p">)</span>
+    <span class="n">strings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span
+                            class="o">=</span> <span class="n">std</span><span class="o">::</span><span
+                            class="n">string</span><span class="p">(</span><span class="mi">1</span><span
+                            class="p">,</span><span class="n">i</span><span class="p">);</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span
+                            class="n">previous_string</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">code</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">next_code</span> <span class="o">=</span> <span
+                            class="mi">257</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">in</span> <span class="o">&gt;&gt;</span> <span
+                            class="n">code</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">strings</span><span class="p">.</span><span
+                            class="n">find</span><span class="p">(</span> <span class="n">code</span> <span
+                            class="p">)</span> <span class="o">==</span> <span class="n">strings</span><span
+                            class="p">.</span><span class="n">end</span><span class="p">()</span> <span
+                            class="p">)</span> 
+      <span class="n">strings</span><span class="p">[</span> <span class="n">code</span> <span class="p">]</span> <span
+                            class="o">=</span> <span class="n">previous_string</span> <span class="o">+</span> <span
+                            class="n">previous_string</span><span class="p">[</span><span class="mi">0</span><span
+                            class="p">];</span>
+    <span class="n">out</span> <span class="o">&lt;&lt;</span> <span class="n">strings</span><span
+                            class="p">[</span><span class="n">code</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">previous_string</span><span
+                            class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span
+                            class="n">next_code</span> <span class="o">&lt;=</span> <span
+                            class="n">max_code</span> <span class="p">)</span>
+      <span class="n">strings</span><span class="p">[</span><span class="n">next_code</span><span
+                            class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">previous_string</span> <span
+                            class="o">+</span> <span class="n">strings</span><span class="p">[</span><span class="n">code</span><span
+                            class="p">][</span><span class="mi">0</span><span class="p">];</span>
+    <span class="n">previous_string</span> <span class="o">=</span> <span class="n">strings</span><span
+                            class="p">[</span><span class="n">code</span><span class="p">];</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre>
+                </figure>
+
+                <p>What exactly is the effect of implementing this algorithm using a pair of
+                    <em>function templates</em>, parameterized on the the types of the input and output objects? What
+                    this means is that you can call these compression routines with any type of I/O object you can
+                    throw at them. It can work with C++ iostreams, C FILE * objects, raw blocks of memory,
+                    whatever you want.</p>
+
+                <p>But there’s a catch to that flexibility - you have to implement some basic I/O routines for
+                    whatever type you are using. Fortunately, this is not too hard.</p>
+
+                <p>The actual I/O that is done in the compression routines is defined by four template classes I
+                    created. These classes are defined in <code>lzw_streambase.h</code>. These classes don’t have
+                    implementations, but they do define the methods you need to implement to work with the compressor
+                    and decompressor. The four classes are:</p>
+
+                <ul>
+                    <li/>
+                    <code>input_symbol_stream&lt;T&gt;</code>
+                    <li/>
+                    <code>ouput_symbol_stream&lt;T&gt;</code>
+                    <li/>
+                    <code>input_code_stream&lt;T&gt;</code>
+                    <li/>
+                    <code>output_code_stream&lt;T&gt;</code>
+                </ul>
+
+                <p>The first two classes are the symbol input and output classes. These are normally going to be very
+                    simple implementations, as they just have to read single characters to and from streams, while
+                    checking for errors or ends of streams. I use the same versions of these classes in all four
+                    implementations, so the code in <code>lzw-a.h</code> is unchanged in the other three header files.
+                </p>
+
+                <p>The <code>input_symbol_stream&lt;T&gt;</code> class has one member function: the extraction
+                    operator, which reads a character from the stream and returns a boolean true or false. You’ll see
+                    later in this section that the implementation of this for types such as <code>std::istream</code>
+                    is trivial.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span
+                        class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">input_symbol_stream</span>
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_symbol_stream</span><span class="p">(</span> <span class="n">T</span> <span
+                            class="o">&amp;</span> <span class="p">);</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">char</span> <span class="o">&amp;</span><span class="n">c</span> <span class="p">);</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The <code>output_symbol_stream&lt;T&gt;</code> class uses the insertion operator to write strings
+                    instead of individual characters - because that is what is stored in the dictionary.
+                    The C++ <code>std::string</code> class makes a perfectly good container for any variety of symbols,
+                    including binary data, and unlike the alternative <code>vector&lt;char&gt;</code>, it comes with
+                    hash functions and <code>iostream</code> operators.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span
+                        class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">output_symbol_stream</span>
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_symbol_stream</span><span class="p">(</span> <span class="n">T</span> <span
+                            class="o">&amp;</span>  <span class="p">);</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span
+                            class="o">&amp;</span><span class="n">s</span> <span class="p">);</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The <code>input_code_stream&lt;T&gt;</code> class reads codes, normally unsigned integers, from
+                    some type of stream. In my implementations, this class also returns false if it encounters the
+                    <code>EOF_CODE</code> in the stream of incoming codes. Removing the responsibility for EOF
+                    detection from the decompressor makes the code a bit simpler and more versatile.</p>
+
+                <p>The formatting of the integer is entirely up to the implementor, but the most common approach will
+                    probably be variable length codes ranging from 9 to 16 or so bits.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span
+                        class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">input_code_stream</span>
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_code_stream</span><span class="p">(</span> <span class="n">T</span> <span
+                            class="o">&amp;</span><span class="p">,</span> <span class="kt">unsigned</span> <span
+                            class="kt">int</span> <span class="p">);</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="o">&amp;</span><span
+                            class="n">i</span> <span class="p">);</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The <code>output_code_stream&lt;T&gt;</code> class writes codes, usually unsigned integers,
+                    to some type of stream. Whatever class you implement for this function must agree with the
+                    implementation for <code>input_code_stream&lt;T&gt;</code>.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span
+                        class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">output_code_stream</span> 
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_code_stream</span><span class="p">(</span> <span class="n">T</span> <span
+                            class="o">&amp;</span><span class="p">,</span> <span class="kt">unsigned</span> <span
+                            class="kt">int</span> <span class="p">);</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">i</span> <span class="p">);</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>You can see that at the top of the compressor and decompressor, I instantiate objects of these
+                    types, then use the standard insertion and extraction operators to read and write from these
+                    objects.</p>
+
+                <h4>LZW-A</h4>
+
+                <p>In my sample windows program, I include <code>lzw_streambase.h</code> and <code>lzw.h</code>,
+                    which accounts for all of the code you have seen so far. I have the following lines that perform
+                    compression and decompression:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span
+                        class="n">in</span><span class="p">(</span> <span class="n">name</span><span class="p">,</span> <span
+                        class="n">std</span><span class="o">::</span><span class="n">ios_base</span><span
+                        class="o">::</span><span class="n">binary</span> <span class="p">);</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ofstream</span> <span class="n">lzw_out</span><span
+                            class="p">(</span> <span class="n">temp_name_lzw</span><span class="p">,</span> <span
+                            class="n">std</span><span class="o">::</span><span class="n">ios_base</span><span class="o">::</span><span
+                            class="n">binary</span> <span class="p">);</span>
+<span class="n">compress</span><span class="p">(</span> <span class="p">(</span><span class="n">std</span><span
+                            class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="p">)</span> <span class="n">in</span><span class="p">,</span> <span
+                            class="p">(</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">ostream</span><span class="o">&amp;</span><span class="p">)</span> <span
+                            class="n">lzw_out</span><span class="p">,</span> <span class="n">pDlg</span><span class="o">-&gt;</span><span
+                            class="n">m_MaxCodeSize</span> <span class="p">);</span>
+<span class="p">.</span>
+<span class="p">.</span>
+<span class="p">.</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">lzw_in</span><span
+                            class="p">(</span> <span class="n">temp_name_lzw</span><span class="p">,</span> <span
+                            class="n">std</span><span class="o">::</span><span class="n">ios_base</span><span class="o">::</span><span
+                            class="n">binary</span> <span class="p">);</span>
+<span class="n">std</span><span class="o">::</span><span class="n">fstream</span> <span class="n">out</span><span
+                            class="p">(</span> <span class="n">temp_name_out</span><span class="p">,</span> 
+                  <span class="n">std</span><span class="o">::</span><span class="n">fstream</span><span
+                            class="o">::</span><span class="n">in</span>    <span class="o">|</span> 
+                  <span class="n">std</span><span class="o">::</span><span class="n">fstream</span><span
+                            class="o">::</span><span class="n">out</span>   <span class="o">|</span> 
+                  <span class="n">std</span><span class="o">::</span><span class="n">fstream</span><span
+                            class="o">::</span><span class="n">binary</span> <span class="p">);</span>
+<span class="n">decompress</span><span class="p">(</span> <span class="p">(</span><span class="n">std</span><span
+                            class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="p">)</span> <span class="n">lzw_in</span><span class="p">,</span> <span
+                            class="p">(</span><span class="n">std</span><span class="o">::</span><span
+                            class="n">ostream</span><span class="o">&amp;</span><span class="p">)</span> <span
+                            class="n">out</span><span class="p">,</span> <span class="n">pDlg</span><span class="o">-&gt;</span><span
+                            class="n">m_MaxCodeSize</span> <span class="p">);</span></code></pre>
+                </figure>
+
+                <p>If I try to build this project as-is, I get a nasty list of eight linker errors:</p>
+                <center>
+                    <img alt="This graphic shows a list of linker errors that illustrate an initial problem with the streaming code."
+                         src="/assets/2011-11-08-lzw-revisited/Figure01.png"
+                         title=""/>
+                    <br/>
+                    <b>Visual Studio 10 Error Messages</b>
+                </center>
+                <p/>
+
+                <p>If you have the fortitude to crawl through those link errors, you will see that what is missing
+                    are the implementations of the four classes parameterized on <code>std::ostream</code> and
+                    <code>std::istream</code>. Each of the four classes needs the implementation of a constructor and
+                    either an insertion or extraction operator. And with no class definitions at all, that adds up
+                    to eight missing functions. To get us started on performing actual LZW compression, I’ve created
+                    the first implementation of these four classes in <code>lzw-a.h</code>. Let’s take a look at each
+                    of these in turn.</p>
+
+                <p>It’s tempting to try to read characters using the <code>ifstream</code> extraction operator, as in
+                    <code>m_impl &gt;&gt; c</code>, but that operator skips over whitespace, so we don’t get an exact
+                    copy of the input stream. Using <code>get()</code> works around this problem. Below is the
+                    complete definition of <code>input_symbol_stream&lt;std::istream&gt;</code> used in all four LZW
+                    implementations in this article:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">input_symbol_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_symbol_stream</span><span class="p">(</span> <span class="n">std</span><span
+                            class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="n">input</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_input</span><span class="p">(</span> <span
+                            class="n">input</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">char</span> <span class="o">&amp;</span><span class="n">c</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">m_input</span><span
+                            class="p">.</span><span class="n">get</span><span class="p">(</span> <span
+                            class="n">c</span> <span class="p">)</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="n">m_input</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>Using the insertion operator to output strings seems to work properly, even when the strings
+                    contain binary data, so the implementation of the class used to output symbols is as simple as we
+                    could hope for. Again, this exact code is used in all four implementations in this article:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">output_symbol_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_symbol_stream</span><span class="p">(</span> <span class="n">std</span><span
+                            class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">output</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_output</span><span class="p">(</span> <span
+                            class="n">output</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span
+                            class="o">&amp;</span><span class="n">s</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">m_output</span> <span class="o">&lt;&lt;</span> <span class="n">s</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">m_output</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>LZW-A prints the text values of integers to the output stream, and reads them back in that format.
+                    This is not efficient at all, but it is a great aid in debugging. If you are having a problem with
+                    the algorithm, this provides a nice way to examine your stream. The implementation of this is very
+                    simple - just use the <code>std::ostream</code> insertion operator, and follow each code by a
+                    newline so it can be properly parsed on input, as well as be easily loaded into a text editor.</p>
+
+                <p>One important thing to notice in this class: the presence of a destructor that prints the
+                    <code>EOF_CODE</code>. Since this object goes out of scope as the compressor exits, this insures
+                    that every code stream will end with this special code. Putting the onus on the I/O routines to
+                    deal with EOF issues simplifies the algorithm itself. (It also means that you can implement
+                    versions of LZW that don’t use an EOF in the code stream.)</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">output_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_code_stream</span><span class="p">(</span> <span class="n">std</span><span
+                            class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">output</span><span class="p">,</span> <span class="k">const</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_output</span><span class="p">(</span> <span
+                            class="n">output</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span
+                            class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">m_output</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">&lt;&lt;</span> <span
+                            class="sc">'\n'</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="o">~</span><span class="n">output_code_stream</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="o">*</span><span class="k">this</span> <span class="o">&lt;&lt;</span> <span
+                            class="n">EOF_CODE</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">m_output</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The corresponding version of the input class just reads in the white-space separated codes. If
+                    there is an error or an <code>EOF_CODE</code> encountered in the stream, the extraction operator
+                    returns false, which allows the decompressor to know when it is time to stop processing.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">input_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_code_stream</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span
+                            class="n">istream</span> <span class="o">&amp;</span><span class="n">input</span><span
+                            class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_input</span><span class="p">(</span> <span
+                            class="n">input</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="o">&amp;</span><span
+                            class="n">i</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">m_input</span> <span class="o">&gt;&gt;</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">m_input</span> <span
+                            class="o">||</span> <span class="n">i</span> <span class="o">==</span> <span class="n">EOF_CODE</span> <span
+                            class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="n">m_input</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>By including <code>lzw-a.h</code> along with the other two header files, I can now create a
+                    program that compiles, links, and is able to test the algorithm. Using my UNIX test program, I
+                    compress the demo string from earlier in this article, and I see the output as it is sent directly
+                    to <code>stdout</code>:</p>
+
+                <center>
+                    <img alt="This graphic shows a screen grab with the output codes generated when compressing the string ABBABBBABBA. The output codes are, in order, 65, 66, 66, 257, 258, 260, 65, 256."
+                         src="/assets/2011-11-08-lzw-revisited/Figure02.png"
+                         title=""/>
+                    <br/>
+                    <b>Compressing <code>ABBABBBABBA</code></b>
+                </center>
+                <p/>
+
+                <p>Fortunately, the output is identical to what was shown earlier, with the addition of the final
+                    <code>EOF_CODE</code> used to delimit the end of the code stream.</p>
+
+                <h4>LZW-B</h4>
+
+                <p>The header file <code>lzw-b.h</code> implements specialized classes that replace the text-mode
+                    output of the codes in <code>lzw-a.h</code> with binary codes stored in a short integer - two bytes.
+                </p>
+
+                <p>The classes that read and write symbols are unchanged, but reading and writing codes has to change
+                    in order to do this new binary output.</p>
+
+                <p>Writing the codes to <code>std::ostream</code> as binary values requires breaking the integer
+                    code into two bytes and writing the bytes one at a time. There are more efficient ways to write
+                    the complete short integer in one function call, but they raise code portability problems, as
+                    we don’t always know what order bytes will be written in.</p>
+
+                <p>Like the code stream output object in <code>lzw-a.h</code>, this version of the code output class
+                    has a destructor that outputs an <code>EOF_CODE</code> value:</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">output_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_code_stream</span><span class="p">(</span> <span class="n">std</span><span
+                            class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">output</span><span class="p">,</span> <span class="k">const</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_output</span><span class="p">(</span> <span
+                            class="n">output</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span
+                            class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">m_output</span><span class="p">.</span><span class="n">put</span><span class="p">(</span> <span
+                            class="n">i</span> <span class="o">&amp;</span> <span class="mh">0xff</span> <span
+                            class="p">);</span>
+        <span class="n">m_output</span><span class="p">.</span><span class="n">put</span><span class="p">(</span> <span
+                            class="p">(</span><span class="n">i</span><span class="o">&gt;&gt;</span><span
+                            class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span
+                            class="p">);</span>
+    <span class="p">}</span>
+    <span class="o">~</span><span class="n">output_code_stream</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="o">*</span><span class="k">this</span> <span class="o">&lt;&lt;</span> <span
+                            class="n">EOF_CODE</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">m_output</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>Reading the codes requires reading the two bytes that make up the short integer, then combining
+                    them. While reading, if the routine detects an <code>EOF_CODE</code>, it returns false, which
+                    tells the decompressor to stop processing. It also returns false if there is an error on the input
+                    code stream.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">input_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&gt;</span> <span
+                            class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_code_stream</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span
+                            class="n">istream</span> <span class="o">&amp;</span><span class="n">input</span><span
+                            class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_input</span><span class="p">(</span> <span
+                            class="n">input</span> <span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="o">&amp;</span><span
+                            class="n">i</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">m_input</span><span
+                            class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span
+                            class="p">)</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&amp;</span> <span
+                            class="mh">0xff</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">m_input</span><span
+                            class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span
+                            class="p">)</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="n">i</span> <span class="o">|=</span> <span class="p">(</span><span class="n">c</span> <span
+                            class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span
+                            class="mi">8</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="n">i</span> <span class="o">==</span> <span
+                            class="n">EOF_CODE</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="n">m_input</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The most exciting thing about <code>lzw-b.h</code> is that you can now see data compression taking
+                    place. The figure below shows a sample run of this implementation against the
+                    <a href="https://corpus.canterbury.ac.nz/descriptions/" target="_blank">Canterbury Corpus</a>,
+                    a standard set of files used to test compression. A run with my Windows test program shows
+                    that the files are compressing quite nicely:</p>
+                <center>
+                    <img alt="The LZWTest dialog, showing the stats on all the files compressed in a test run. The dialog includes file name, size, compression size and ratio, and a pass/fail flag."
+                         src="/assets/2011-11-08-lzw-revisited/Figure03.png"
+                         title=""/>
+                    <br/>
+                    <b>Compressing the Canterbury Corpus with <code>lzw-b.h</code></b>
+                </center>
+                <p/>
+
+                <h4>LZW-C</h4>
+
+                <p>The third I/O implentation, defined in <code>lzw-c.h</code>, writes binary codes like
+                    <code>lzw-b.h</code>, but with one crucial difference. Instead of being hard coded to 16 bit
+                    codes, <code>lzw-c.h</code> determines the maximum code size needed based on the maximum code
+                    value passed as an argument to <code>compress()</code> and <code>decompress()</code>. It then
+                    writes codes based on that width, which will normally be something in the range of 9-18 bits
+                    wide.</p>
+
+                <p>Since these values are not aligned with byte boundaries, there are some issues writing them to
+                    streams that expect to read and write bytes. However, it is definitely worth all the bit shifting,
+                    ORing, and ANDing, because when the size is 12 bites, we are going to save four bits per code when
+                    compared to using <code>lzw-b.h</code>. But every read and write potentially starts somewhere in
+                    the middle of a byte, so the I/O classes have to do some extra work - mostly involved with
+                    shifting bits to the correct position in the output stream.</p>
+
+                <p>Note that the code to read and write symbols is unchanged from <code>lzw-a.h</code>
+                    and <code>lzw-b.h</code>.</p>
+
+                <p>Many of the CS students who read my earlier article on LZW ran into a brick wall when they started
+                    trying to understand the code that performs I/O on codes of variable bit lengths. Obviously,
+                    writing 11 bit codes when your file system is oriented around eight-bit bytes involves a lot of
+                    bit twiddling, and I’m afraid that many novices are woefully deficient in this department. Not
+                    just in understanding the bitwise operators in C, such as shifting, masking, etc., but in
+                    understanding binary arithmetic in general.</p>
+
+                <p>That’s why I’ve structured the code and this article a bit differently this time around.
+                    If the I/O operations in <code>lzw-c.h</code> and <code>lzw-d.h</code> are bewildering, well, no
+                    worries. They have absolutely nothing to do with the LZW algorithm itself. You can investigate and
+                    explore the algorithm completely using <code>lzw-a.h</code> and <code>lzw-b.h</code>, and just
+                    forget about the last two I/O implementations. They provide additional efficiency, but as I have
+                    said, have nothing to do with the algorithm itself.</p>
+
+                <p>Further, once you use <code>lzw-a.h</code> to debug and understand the algorithm, you can
+                    certainly plug in <code>lzw-c.h</code> and <code>lzw-d.h</code> and take advantage of their
+                    improved compression, even if you don’t follow all the code.</p>
+
+                <p>It might be appropriate to add a sidebar or another section to explain the variable bit length I/O
+                    in detail, but this article is quite long already, and there are numerous other resources for the
+                    interested reader to explore the details. (But if you find yourself deficient in this area, you
+                    owe it to yourself to hit the books and get to the point where these operations make sense. This
+                    won’t be the last time you need to understand bitwise operators.)</p>
+
+                <p>For those who are ready to tackle this more complicated I/O procedure, we will look first at
+                    the <code>output_code_stream&lt;std::ostream&gt;</code> class. Here, the first thing to
+                    understand is that the constructor has to initialize the number of bits in the code.
+                    This value is calculated from the <code>max_code</code> parameter, and is stored in member
+                    <code>m_code_size</code>, where it is used frequently.</p>
+
+                <p>Next, the insertion operator. Output of codes proceeds as follows. Member
+                    <code>m_pending_bits</code> tells us how many bits are pending output while sitting in
+                    member <code>m_pending_output</code>. These bits are right justified, and the count will always be
+                    less than eight. When the new code is written, it is inserted into <code>m_pending_output</code>
+                    after being left shifted so it will be laid down just past the pending bits. After doing that,
+                    we presumably have some bytes to output - the exact number depends on various factors.
+                    The <code>flush()</code> routine is called, and it flushes all complete bytes out.
+                    When it completes, there can be anywhere from zero to seven bits still waiting to be output,
+                    and they will be right justified in <code>m_pending_output</code>.</p>
+
+                <p>In the destructor, we output an <code>EOF_CODE</code>, and then do a flush as well. But in this
+                    case, we flush all possible bits, not just the complete bytes. There are two good reasons for this.
+                    First, we don’t care if the last bits that are flushed out are only part of a code -
+                    the code will be <code>EOF_CODE</code>, and that is the last one. And second, if we don’t flush
+                    those final bits out in the destructor, they will never be sent to the output stream. This means
+                    the decoder will not see those bits, and we will most likely break the decompress process.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">output_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">output_code_stream</span><span class="p">(</span> <span class="n">std</span><span
+                            class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">out</span><span class="p">,</span> <span class="kt">unsigned</span> <span
+                            class="kt">int</span> <span class="n">max_code</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_output</span><span class="p">(</span> <span
+                            class="n">out</span> <span class="p">),</span>
+          <span class="n">m_pending_bits</span><span class="p">(</span><span class="mi">0</span><span
+                            class="p">),</span>
+          <span class="n">m_pending_output</span><span class="p">(</span><span class="mi">0</span><span
+                            class="p">),</span>
+          <span class="n">m_code_size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span> <span class="n">max_code</span> <span
+                            class="o">&gt;&gt;=</span> <span class="mi">1</span> <span class="p">)</span>
+            <span class="n">m_code_size</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="o">~</span><span class="n">output_code_stream</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="o">*</span><span class="k">this</span> <span class="o">&lt;&lt;</span> <span
+                            class="n">EOF_CODE</span><span class="p">;</span>
+        <span class="n">flush</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span> <span
+                            class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="o">&amp;</span><span class="n">i</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">m_pending_output</span> <span class="o">|=</span> <span class="n">i</span> <span class="o">&lt;&lt;</span> <span
+                            class="n">m_pending_bits</span><span class="p">;</span>
+        <span class="n">m_pending_bits</span> <span class="o">+=</span> <span class="n">m_code_size</span><span
+                            class="p">;</span>
+        <span class="n">flush</span><span class="p">(</span> <span class="mi">8</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="kt">void</span> <span class="n">flush</span><span class="p">(</span> <span class="k">const</span> <span
+                            class="kt">int</span> <span class="n">val</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span> <span class="n">m_pending_bits</span> <span class="o">&gt;=</span> <span
+                            class="n">val</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="n">m_output</span><span class="p">.</span><span class="n">put</span><span
+                            class="p">(</span> <span class="n">m_pending_output</span> <span
+                            class="o">&amp;</span> <span class="mh">0xff</span> <span class="p">);</span>
+            <span class="n">m_pending_output</span> <span class="o">&gt;&gt;=</span> <span class="mi">8</span><span
+                            class="p">;</span>
+            <span class="n">m_pending_bits</span> <span class="o">-=</span> <span class="mi">8</span><span
+                            class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span
+                            class="n">m_output</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">m_code_size</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">m_pending_bits</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">m_pending_output</span><span class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>Like the output code class, the input code class has to calculate the code size for this
+                    decompression based on the <code>max_code</code> value passed in the function call.</p>
+
+                <p>When an attempt is made to read a code, there must be a minimum of <code>m_code_size</code>
+                    bits in member <code>m_pending_input</code>. If there aren’t, new bytes are read in one at a time,
+                    and inserted into <code>m_pending_input</code> after having been shifted left
+                    the appropriate amount. Once <code>m_pending_input</code> contains at least
+                    <code>m_code_size</code> bits, the code is extracted from <code>m_pending_input</code>
+                    using the appropriate mask, the count in <code>m_pending_input</code> is reduced, and
+                    <code>m_pending_input</code> is shifted right by <code>m_code_size</code> bits.</p>
+
+                <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span
+                        class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">class</span> <span class="nc">input_code_stream</span><span class="o">&lt;</span><span
+                            class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="k">public</span> <span class="o">:</span>
+    <span class="n">input_code_stream</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span
+                            class="n">istream</span> <span class="o">&amp;</span><span class="n">in</span><span
+                            class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span
+                            class="n">max_code</span> <span class="p">)</span> 
+        <span class="o">:</span> <span class="n">m_input</span><span class="p">(</span> <span class="n">in</span> <span
+                            class="p">),</span>
+          <span class="n">m_available_bits</span><span class="p">(</span><span class="mi">0</span><span
+                            class="p">),</span>
+          <span class="n">m_pending_input</span><span class="p">(</span><span class="mi">0</span><span
+                            class="p">),</span>
+          <span class="n">m_code_size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span> <span class="n">max_code</span> <span
+                            class="o">&gt;&gt;=</span> <span class="mi">1</span> <span class="p">)</span>
+            <span class="n">m_code_size</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;&gt;</span><span class="p">(</span> <span
+                            class="kt">unsigned</span> <span class="kt">int</span> <span class="o">&amp;</span><span
+                            class="n">i</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span> <span class="n">m_available_bits</span> <span class="o">&lt;</span> <span
+                            class="n">m_code_size</span> <span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span
+                            class="n">m_input</span><span class="p">.</span><span class="n">get</span><span
+                            class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="p">)</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="n">m_pending_input</span> <span class="o">|=</span> <span class="p">(</span><span
+                            class="n">c</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span
+                            class="o">&lt;&lt;</span> <span class="n">m_available_bits</span><span class="p">;</span>
+            <span class="n">m_available_bits</span> <span class="o">+=</span> <span class="mi">8</span><span
+                            class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">m_pending_input</span> <span
+                            class="o">&amp;</span> <span class="o">~</span><span class="p">(</span><span
+                            class="o">~</span><span class="mi">0</span> <span class="o">&lt;&lt;</span> <span class="n">m_code_size</span><span
+                            class="p">);</span>
+        <span class="n">m_pending_input</span> <span class="o">&gt;&gt;=</span> <span class="n">m_code_size</span><span
+                            class="p">;</span>
+        <span class="n">m_available_bits</span> <span class="o">-=</span> <span class="n">m_code_size</span><span
+                            class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="n">i</span> <span class="o">==</span> <span
+                            class="n">EOF_CODE</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">private</span> <span class="o">:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span
+                            class="n">m_input</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">m_code_size</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">m_available_bits</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">m_pending_input</span><span
+                            class="p">;</span>
+<span class="p">};</span></code></pre>
+                </figure>
+
+                <p>The table below shows the results of a test run comparing LZW-B and LZW-C run with a maximum code
+                    of 4095. With this maximum value, all codes fit in a 12-bit integer. Since LZW-B will use a
+                    16-bit integer to store the code values, and LZW-C will use 12-bits, there should be a 4:3 ratio
+                    between the ratio of the file sizes when compressed using the two algorithms, and this looks to be
+                    the case:</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <th>File Name</th>
+                            <th>Original<br/>Size</th>
+                            <th>Compressed<br/>LZW-B</th>
+                            <th>Compressed<br/>LZW-C</th>
+                            <th>Ratio</th>
+                        </tr>
+                        <tr>
+                            <td>alice29.txt</td>
+                            <td>152089</td>
+                            <td>96428</td>
+                            <td>72322</td>
+                            <td>0.750</td>
+                        </tr>
+                        <tr>
+                            <td>alphabet.txt</td>
+                            <td>100000</td>
+                            <td>4538</td>
+                            <td>3404</td>
+                            <td>0.750</td>
+                        </tr>
+                        <tr>
+                            <td>asyoulik.txt</td>
+                            <td>125179</td>
+                            <td>83966</td>
+                            <td>62975</td>
+                            <td>0.750</td>
+                        </tr>
+                        <tr>
+                            <td>bib</td>
+                            <td>111261</td>
+                            <td>71792</td>
+                            <td>53845</td>
+                            <td>0.750</td>
+                        </tr>
+                        <tr>
+                            <td>bible.txt</td>
+                            <td>4047392</td>
+                            <td>2468326</td>
+                            <td>1851245</td>
+                            <td>0.750</td>
+                        </tr>
+                    </table>
+                    <b>Comparing 12-bit compression between LZW-B and LZW-C</b>
+                </center>
+                <p/>
+
+                <p>It looks like things are working as expected.</p>
+
+                <h4>LZW-D</h4>
+
+                <p>The code in <code>lzw-d.h</code> represents the final and most efficient version of I/O for the
+                    LZW code streams. It builds on the code in <code>lzw-c.h</code> - at its core it is a variable
+                    bit-length I/O stream. However, there is one crucial difference from <code>lzw-c.h</code>: the
+                    code I/O in <code>lzw-d.h</code> starts at the smallest possible code size, nine bits,
+                    and increases the code size as needed, until it reaches the maximum value for this compression
+                    session. The maximum value is the parameter passed in to the invocation of <code>compress()</code>
+                    or <code>decompress()</code>.</p>
+
+                <p>The logic behind this is pretty simple. Even if we are going to use 16-bit codes in an LZW program,
+                    when the program first starts, the maximum possible code the program can emit is 256, which only
+                    needs nine bits to encode. And each time we output a new symbol, that maximum possible code value
+                    only increases by one, which means that the first 256 codes output by the encoder can all fit in
+                    nine bits.</p>
+
+                <p>So the LZW-D encoder starts encoding using nine-bit code widths, and then bumps the value to ten as
+                    soon as the highest possible output code reaches 512. This process continues, incrementing the
+                    code size until the maximum code size is reached. At that point the code size stays fixed,
+                    as no new codes are being added to the dictionary.</p>
+
+                <p>The decoder follows exactly the same process - reading in the first code with a width of nine bits,
+                    then bumping to ten when the maximum possible input code reaches 512.</p>
+
+                <p>The code for this class is built on that from <code>lzw-c.h</code>, with some added complexity.
+                    Due to its increasing length, and the fact that it doesn’t add too much to the discussion of
+                    LZW, I’ve omitted the listing, and instead refer you to the download available at the end of
+                    the article.</p>
+
+                <h4>The Windows Test Program</h4>
+
+                <p>When you develop compression code, there are a few different common tasks you are likely to want to
+                    perform:</p>
+
+                <ul>
+                    <li/>
+                    Check your code for correctness, often through bulk testing.
+                    <li/>
+                    Check your compression ratios against standard benchmarks.
+                    <li/>
+                    Analyze your program's performance so as to make it more efficient and locate bottlenecks.
+                </ul>
+
+                <p>My Windows app is designed to help with all of these tasks. It basically allows you to select a
+                    single directory, set a maximum code size, then perform compression and decompression of all
+                    the files in the directory. An optional checkbox lets you include files in all directories
+                    under the test directory as well.</p>
+
+                <p>The application was built using Visual Studio 10, and it is a simple MFC Dialog-based application.
+                    It allows you to select a base directory, a maximum code size, and then compress all the files in
+                    that directory. If you select the recursion check box, you will also compress all the files in the
+                    entire tree of subdirectories below it.</p>
+
+                <p>Each file is compressed to a temporary location, then decompressed in a temporary location. The
+                    size of the compressed file is saved, and then a comparison is done to ensure that the original
+                    and expanded files are identical.</p>
+
+                <p>To help with data collection, after running a test, you can press the copy button and get the
+                    results of the test stuffed into your clipboard. Although it isn’t visible in the display, the
+                    data stored in your clipboard includes the full path name of the original file, not just the
+                    basename.</p>
+
+                <p>This Visual Studio project takes advantage of a number of C++11 features, and as a result it will
+                    need some modification to work with earlier versions. Any version that supports
+                    <code>unordered_map</code> can be made to build without too many changes. And if you are going
+                    way back in time, you could replace <code>unordered_map</code> with <code>map</code>.</p>
+
+                <p>As shipped, the test program uses <code>lzw-d.h</code>. To use any of the other three other
+                    versions of I/O discussed in this article, just modify the include file selected at the top of
+                    LzwTestDlg.cpp. The figure below shows what the app looks like after running through some data:</p>
+
+                <center>
+                    <img alt="Another dialog from the Windows test app, showing the compression stats on the Cantebury Corpus using lzw-d.h"
+                         src="/assets/2011-11-08-lzw-revisited/Figure04.png"
+                         title=""/>
+                    <br/>
+                    <b>The Windows test app after a test run</b>
+                </center>
+                <p/>
+
+                <p>After pressing the copy button at the bottom of the dialog, you can paste the data into a
+                    spreadsheet and then crunch it to your heart’s content:</p>
+
+                <center>
+                    <img alt="The test data from the windows test app can be copied and then pasted into a spreadsheet. This dialog shows the data in an Excel spreadsheet."
+                         src="/assets/2011-11-08-lzw-revisited/Figure05.png"
+                         title=""/>
+                    <br/>
+                    <b>Copying the data into a spreadsheet</b>
+                </center>
+                <p/>
+
+                <h4>The Linux Test Program</h4>
+
+                <p>The LZW code is platform independent, and will build and run just fine on UNIX or Linux systems.
+                    The Linux test program, <code>lzw.cpp</code>, allows you to compress or decompress files from the
+                    command line. It builds just fine with g++ 4.5, as long as you use the <code>-std=c++0x</code>
+                    switch to turn on the latest language features. Compiling with earlier versions will require a
+                    few minor modifications.</p>
+
+                <p>The command line interface to the test program is not too complicated, and is probably best
+                    documented by looking at the usage output:</p>
+
+                <pre>
+mrn@ubuntu:~/LzwTest$ g++ -std=c++0x lzw.cpp -o lzw
+mrn@ubuntu:~/LzwTest$ ./lzw
+Usage:
+lzw [-max max_code] -c input output #compress file input to file output
+lzw [-max max_code] -c - output     #compress stdin to file otuput
+lzw [-max max_code] -c input        #compress file input to stdout
+lzw [-max max_code] -c              #compress stdin to stdout
+lzw [-max max_code] -d input output #decompress file input to file output
+lzw [-max max_code] -d - output     #decompress stdin to file otuput
+lzw [-max max_code] -d input        #decompress file input to stdout
+lzw [-max max_code] -d              #decompress stdin to stdout
+mrn@ubuntu:~/LzwTest$ 
+</pre>
+
+                <p>Like the Windows test program, the command line program is built by default with
+                    <code>lzw-d.h</code>. Replacing this algorithm with any of the three others requires a minor
+                    change to the source code.</p>
+
+                <p>With the default build, the program produces output nearly identical to UNIX compress. The one
+                    difference is that UNIX compress monitors the compression ratio after the dictionary is full, and
+                    clears the dictionary if the ratio starts to deteriorate (which it almost always does.) I include
+                    a benchmark program that tests UNIX compress against the command line test program, and the
+                    results show that for small files, the file size is almost identical:</p>
+
+                <pre>
+mrn@ubuntu:~/LzwTest$ ./benchmark.sh 65535 16 canterbury | head -n 15 | column -t
+Filename                 Original-size  LZW-size  Compress-size
+--------                 -------------  --------  -------------
+canterbury/aaa.txt       33406          320       321
+canterbury/alice29.txt   152089         62247     62247
+canterbury/alphabet.txt  100000         3052      3053
+canterbury/asyoulik.txt  125179         54989     54990
+canterbury/a.txt         1              3         5
+canterbury/bib           111261         46527     46528
+canterbury/bible.txt     4047392        1417735   1377093
+canterbury/book1         768771         317133    317133
+canterbury/book2         610856         247593    251289
+canterbury/cp.html       24603          11315     11317
+canterbury/E.coli        4638690        1213579   1218349
+canterbury/fields.c      11150          4963      4964
+canterbury/geo           102400         77777     77777
+</pre>
+
+                <p>You can see in this test that LZW-D and UNIX compress perform nearly identically for all but the
+                    largest files in the test sample. If I modify UNIX compress to not monitor compression ratios,
+                    the difference seen with larger files goes away:</p>
+
+                <pre>
+mrn@ubuntu:~/LzwTest$ ./benchmark.sh 65535 16 canterbury | head -n 15 | column -t
+Filename                 Original-size  LZW-size  Compress-size
+--------                 -------------  --------  -------------
+canterbury/aaa.txt       33406          320       321
+canterbury/alice29.txt   152089         62247     62247
+canterbury/alphabet.txt  100000         3052      3053
+canterbury/asyoulik.txt  125179         54989     54990
+canterbury/a.txt         1              3         5
+canterbury/bib           111261         46527     46528
+canterbury/bible.txt     4047392        1417735   1417735
+canterbury/book1         768771         317133    317133
+canterbury/book2         610856         247593    247593
+canterbury/cp.html       24603          11315     11317
+canterbury/E.coli        4638690        1213579   1213579
+canterbury/fields.c      11150          4963      4964
+canterbury/geo           102400         77777     77777
+</pre>
+
+                <p>That provides some support for the notion that the algorithm shown here behaves properly.</p>
+
+                <h4>Your Program</h4>
+
+                <p>If you want to build your own program and use these classes, all you need is a C++11 compiler, or
+                    an earlier version and a willingness to make a few changes.</p>
+
+                <p>To use the classes, include in order <code>lzw_streambase.h</code>, one of the four
+                    implementation files for <code>iostreams</code>, preferably <code>lzw-d.h</code>, and finally,
+                    <code>lzw.h</code>. Because the significant code in these files is all implemented as template
+                    functions or classes, there is no library to include in your project, and no C++ source you have
+                    to compile separately.</p>
+
+                <p>All of the code in these header files has been hoisted into the <code>lzw</code> namespace,
+                    so you will either have to explicitly use the namespace when you invoke <code>compress()</code>
+                    and <code>decompress()</code>, or insert this line into your program:</p>
+
+                <figure class="highlight">
+                    <pre><code class="language-c--" data-lang="c++"><span class="k">using</span> <span class="k">namespace</span> <span
+                            class="n">lzw</span><span class="p">;</span></code></pre>
+                </figure>
+
+                <p>One thing to note about the I/O routines I have defined. The template functions are specialized
+                    on <code>std::istream</code> and <code>std::ostream</code>. If you innocently pass in an object
+                    such as an <code>std::ifstream</code>, you will get compile time errors. This is because
+                    C++ template matching is done on a very strict basis - the compiler won’t generally try to
+                    figure out that <code>std::ifstream</code> is derived from <code>std::istream</code>,
+                    and use the existing class. So instead, you will need to cast your arguments to the types
+                    defined in the header files. (Or write your own implementations.)</p>
+
+                <p>Your rights to use this code are covered by my
+                    <a href='/pages/license' target='blank'>liberal code use policy</a>.
+                    As I have mentioned before, this is teaching code, if you decide to use it in a production system,
+                    there are many optimizations you might want to perform.</p>
+
+                <h4>Benchmarks</h4>
+
+                <p>So how does LZW do when it comes to compression? LZW’s original strength was its combination of
+                    good compression ratios with high speed compression. The UNIX compress program is still nice and
+                    fast, and Terry Welch’s original application for LZW was in disk controllers. Because my program
+                    is a teaching program, it won’t be nearly as fast as compress, but it’s still useful to compare
+                    it to the de facto standard for lossless compression: the deflate algorithm.</p>
+
+                <p>We can compare LZW against deflate by a small modification of my benchmark script that uses gzip
+                    instead of compress. The table below shows the average compression ratios for the files in the
+                    canterbury corpus when compressed using maximum code widths of 15-18 bits. (The ratio is defined
+                    as 100*compressed_size/uncompressed_size, so 0% is perfect compression and 100% is no
+                    compression.)</p>
+
+                <center>
+                    <table border="1">
+                        <tr>
+                            <th>gzip</th>
+                            <th>LZW 15 bits</th>
+                            <th>LZW 16 bits</th>
+                            <th>LZW 17 bits</th>
+                            <th>LZW 18 bits</th>
+                        </tr>
+                        <tr>
+                            <td>32.7%</td>
+                            <td>43.2%</td>
+                            <td>42.6%</td>
+                            <td>42.5%</td>
+                            <td>42.3%</td>
+                        </tr>
+                    </table>
+                </center>
+
+                <p>You can see that LZW does do a good job of compressing data, but the deflate algorithm used by
+                    gzip manages to squeeze an additional 10%, more or less, out of the files it compresses.
+                    The gap between LZW and deflate is larger on some types of files, and smaller on others,
+                    but deflate will almost always show a noticeable difference in compression ratios.</p>
+
+                <h4>Variations</h4>
+
+                <p>There are many variations on the code I’ve presented here that make sense.</p>
+
+                <p>One obvious change is to eliminate the special <code>EOF_CODE</code> used to delimit the end of
+                    the code stream. If the code stream is a file or other stream with an inherent EOF condition,
+                    there is no need for an <code>EOF_CODE</code> - simply reaching the end of the input stream will
+                    properly signal the end of the decoded material. Freeing up this one code will make a
+                    microscopically small improvement in the compression ratios of the product.</p>
+
+                <p>If you want to mimic the output of the compress program, you need to remove the
+                    <code>EOF_CODE</code>, and replace it with a <code>CLEAR_CODE</code> that has a value of 256.
+                    The compress program monitors the compression ratios it achieves after its dictionary is full, and
+                    when the ratio starts to decay, it issues the <code>CLEAR_CODE</code>. That code tells the decoder
+                    to clear its dictionary and make a fresh start with new nine-bit codes.</p>
+
+                <p>Once you get the hang of LZW, a good exercise to make sure you have it working properly is to
+                    create a GIF encoder and decoder. GIF uses LZW to losslessly compress images with a constrained
+                    palette, and after all these years is still somewhat of a standard on the web.</p>
+
+                <h4>History</h4>
+
+                <p>Usually the history lesson on an algorithm is at the start of the article, but this is a how-to
+                    piece, and I feel like the trip down memory lane is not as important as understanding how the
+                    algorithm works.</p>
+
+                <p>The roots of LZW were set down in 1978 when Jacob Ziv and Abraham Lempel published the second of
+                    their two seminal works on data compression,
+                    <a href="https://www2.cs.duke.edu/courses/spring03/cps296.5/papers/ziv_lempel_1978_variable-rate.pdf"
+                       target="_blank">“Compression of Individual Sequences via Variable-Rate Coding”</a>.
+                    This paper described a general approach to data compression that involved building dictionaries
+                    of previously seen strings.</p>
+
+                <p>Ziv and Lempel’s work was targeted at an academic audience, and it wasn’t truly popularized until
+                    1984 when Terry Welch published
+                    <a href="https://www2.cs.duke.edu/courses/spring03/cps296.5/papers/welch_1984_technique_for.pdf"
+                       target="_blank">A Technique for High-Performance Data Compression</a>.
+                    Welch’s paper took the somewhat abstract Information Theory work of Ziv and Lempel and reduced it
+                    to practice in such a way that others could easily implement it.</p>
+
+                <p>UNIX compress was probably the first popular program that used LZW compression, and it very
+                    quickly became a standard utility on UNIX systems. The freely available code for compress was
+                    incorporated into
+                    <a href="https://en.wikipedia.org/wiki/ARC_(file_format)" target="_blank">ARC</a>,
+                    one of the first archiving programs for PCs. In addition, the algorithm was used in the GIF file
+                    format, originally created by Compuserve in 1987.</p>
+
+                <p>LZW’s popularity waned in the 1990s for two important reasons. First, Unisys began enforcing
+                    their patents that covered LZW compression, demanding and receiving royalties from various
+                    software companies. Not only did this make developers think twice about the liability they could
+                    incur while using LZW, it resulted in a general public relations backlash against using patented
+                    technology.</p>
+
+                <p>Secondly, the LZW algorithm was eclipsed on the desktop by deflate, as popularized by PKZIP. Not
+                    only did deflate outperform LZW, it was unencumbered by patents, and eventually had a very
+                    reliable and free open source implementation in
+                    <a href="https://zlib.net/" target="_blank">zlib</a>,
+                    a library written by a team led by Marc Adler and Jean-loup Gailly. I don’t know if there is any
+                    way to actually quantify this, but I think one could speculate that zlib is currently installed
+                    on more computer systems than any other software package in existence.</p>
+
+                <p>So LZW has settled down to an existence out of the limelight. It is still an important algorithm,
+                    used in quite a few file formats, and as this article shows, its simplicity makes it an excellent
+                    learning tool.</p>
+
+                <h4>Downloads</h4>
+
+                <ul>
+                    <li><a href="https://marknelson.us/assets/2011-11-08-lzw-revisited/LzwTest.zip">LzwTest.zip</a> -
+                        source for the Windows test app.
+                    </li>
+                    <li><a href="https://marknelson.us/assets/2011-11-08-lzw-revisited/LzwExe.zip">LzwExe.zip</a> - the
+                        Windows test app executable.
+                    </li>
+                    <li><a href="https://marknelson.us/assets/2011-11-08-lzw-revisited/lzw.tgz">lzw.tgz</a> - source for
+                        the UNIX test app.
+                    </li>
+                </ul>
+
+
+            </div>
+            <a class='u-url' hidden href='/posts/2011/11/08/lzw-revisited'></a>
+        </article>
+
+    </div>
+</main>
+<footer class="site-footer h-card">
+    <data class="u-url" href="/"></data>
+    <div class="wrapper">
+        <div class="footer-col-wrapper">
+            <div class="footer-col footer-col-1">
+                <h2 class="footer-heading">Mark Nelson</h2>
+                <!--
+                        <ul class="contact-list">
+                          <li class="p-name">Mark Nelson</li></ul>
+                -->
+            </div>
+            <div class="footer-col footer-col-2">
+                <ul class="social-media-list"></ul>
+            </div>
+            <div class="footer-col footer-col-3">
+                <p>Books, articles, and posts from 1989 to today.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+</body>
+
+</html>
