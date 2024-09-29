@@ -34,8 +34,9 @@ public class BitStream : Stream
         if (_bitBufferCount <= 24)
             while (_bitBufferCount < 32 && _stream.Position < _stream.Length)
             {
-                _bitBuffer <<= 8;
-                _bitBuffer |= (uint)_stream.ReadByte();
+                var local = (uint)_stream.ReadByte();
+                local <<= _bitBufferCount;
+                _bitBuffer |= local;
                 _bitBufferCount += 8;
             }
 
@@ -43,7 +44,6 @@ public class BitStream : Stream
         buffer >>= 32 - bitLength;
 #if DEBUG
         Console.WriteLine($"BitStream buffer: {_bitBuffer:b}, extracted number: {buffer:b}");
-        _stream.Position = 0;
 #endif
         _bitBuffer <<= bitLength;
         Position += bitLength;

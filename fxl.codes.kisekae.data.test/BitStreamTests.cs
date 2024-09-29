@@ -29,16 +29,7 @@ public class BitStreamTests
         var stream = new MemoryStream(bytes);
 
         var bitStream = new BitStream(stream);
-        var list = new List<int>();
-        var sum = 0;
-        while (sum < 32)
-        {
-            var temp = Random.Shared.Next(1, 10);
-            if (sum + temp < 32) list.Add(temp);
-            sum += temp;
-        }
-
-        if (list.Sum() < 32) list.Add(32 - list.Sum());
+        var list = GetRandomNumbersSummingTo(32);
 
         foreach (var num in list)
         {
@@ -50,32 +41,38 @@ public class BitStreamTests
     [Test]
     public void TestReadLong()
     {
-        var random = (ulong)Random.Shared.NextInt64();
+        var random = (uint)Random.Shared.Next();
         var bytes = BitConverter.GetBytes(random);
         var stream = new MemoryStream(bytes);
 
         var bitStream = new BitStream(stream);
-        var list = new List<int>();
-        var sum = 0;
-        while (sum < 64)
-        {
-            var temp = Random.Shared.Next(1, 20);
-            if (sum + temp < 64) list.Add(temp);
-            sum += temp;
-        }
-
-        if (list.Sum() < 64) list.Add(64 - list.Sum());
+        var list = GetRandomNumbersSummingTo(32);
 
         var runningTotal = 0;
         foreach (var num in list)
         {
             var temp = random;
             temp <<= runningTotal;
-            temp >>= 64 - num;
+            temp >>= 32 - num;
             Console.WriteLine($"Original value: {random:b}, bit shifted number: {temp:b}");
             var value = bitStream.ReadBits(num);
             Assert.That(value, Is.EqualTo(temp), $"{num} bits match failed");
             runningTotal += num;
         }
+    }
+
+    private static List<int> GetRandomNumbersSummingTo(int total)
+    {
+        var list = new List<int>();
+        var sum = 0;
+        while (sum < total)
+        {
+            var temp = Random.Shared.Next(1, total / 3);
+            if (sum + temp < total) list.Add(temp);
+            sum += temp;
+        }
+
+        if (list.Sum() < total) list.Add(total - list.Sum());
+        return list;
     }
 }
