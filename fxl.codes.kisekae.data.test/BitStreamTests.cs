@@ -39,7 +39,7 @@ public class BitStreamTests
     }
 
     [Test]
-    public void TestReadLong()
+    public void TestReadInt()
     {
         var random = (uint)Random.Shared.Next();
         var bytes = BitConverter.GetBytes(random);

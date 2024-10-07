@@ -41,15 +41,25 @@ public class BitStream : Stream
             }
 
         var buffer = _bitBuffer;
-        buffer >>= 32 - bitLength;
-#if DEBUG
-        Console.WriteLine($"BitStream buffer: {_bitBuffer:b}, extracted number: {buffer:b}");
-#endif
-        _bitBuffer <<= bitLength;
+        if (bitLength < 32)
+        {
+            buffer >>= 32 - bitLength;
+            _bitBuffer <<= bitLength;
+        }
+        else
+        {
+            _bitBuffer = 0;
+        }
+
         Position += bitLength;
         _bitBufferCount -= bitLength;
 
         return buffer;
+    }
+
+    public override int ReadByte()
+    {
+        return (int)ReadBits(8);
     }
 
     public override void Flush()
