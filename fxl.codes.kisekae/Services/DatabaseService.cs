@@ -10,36 +10,21 @@ using fxl.codes.kisekae.data;
 using fxl.codes.kisekae.data.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using Configuration = fxl.codes.kisekae.data.Entities.Configuration;
 
 namespace fxl.codes.kisekae.Services;
 
-public class DatabaseService
+public class DatabaseService(
+    ConfigurationReaderService configurationReaderService,
+    FileParserService fileParserService,
+    IDbContextFactory<KisekaeContext> contextFactory)
 {
-    private readonly ConfigurationReaderService _configurationReaderService;
-    private readonly IDbContextFactory<KisekaeContext> _contextFactory;
-
-    private readonly FileParserService _fileParserService;
-    private readonly ILogger<DatabaseService> _logger;
-    private readonly IsolatedStorageFile _storage;
-
-    public DatabaseService(ILogger<DatabaseService> logger,
-                           ConfigurationReaderService configurationReaderService,
-                           FileParserService fileParserService,
-                           IDbContextFactory<KisekaeContext> contextFactory)
-    {
-        _logger = logger;
-        _configurationReaderService = configurationReaderService;
-        _fileParserService = fileParserService;
-        _contextFactory = contextFactory;
-        _storage = IsolatedStorageFile.GetUserStoreForApplication();
-    }
+    private readonly IsolatedStorageFile _storage = IsolatedStorageFile.GetUserStoreForApplication();
 
     public IEnumerable<Kisekae> GetAll()
     {
-        using var context = _contextFactory.CreateDbContext();
+        using var context = contextFactory.CreateDbContext();
         return context.KisekaeSets
             .Include(x => x.Configurations)
             .ToArray();
@@ -47,7 +32,7 @@ public class DatabaseService
 
     public Configuration GetConfig(int id)
     {
-        using var context = _contextFactory.CreateDbContext();
+        using var context = contextFactory.CreateDbContext();
         return context.Configurations
             .Include(x => x.Cels).ThenInclude(x => x.Render)
             .Include(x => x.Cels).ThenInclude(x => x.Cel)
@@ -63,14 +48,14 @@ public class DatabaseService
         var checksum = Convert.ToBase64String(SHA256.HashData(memoryStream.GetBuffer()));
         memoryStream.Position = 0; // Reset for re-read
 
-        await using var context = await _contextFactory.CreateDbContextAsync();
+        await using var context = await contextFactory.CreateDbContextAsync();
         var existing = await context.KisekaeSets
             .FirstOrDefaultAsync(x => string.Equals(x.FileName, file.FileName)
                                       || string.Equals(x.CheckSum, checksum));
         if (existing != null) context.KisekaeSets.Remove(existing);
         await context.SaveChangesAsync();
 
-        await _fileParserService.UnzipLzh(file, memoryStream);
+        await fileParserService.UnzipLzh(file, memoryStream);
 
         var directory = Path.GetFileNameWithoutExtension(file.FileName);
 
@@ -85,7 +70,7 @@ public class DatabaseService
 
         var backgroundColors = new Dictionary<Configuration, int>();
         foreach (var config in kisekae.Configurations)
-            _configurationReaderService.ReadConfiguration(config,
+            configurationReaderService.ReadConfiguration(config,
                 backgroundColors,
                 kisekae.Cels.ToDictionary(x => x.FileName.ToLowerInvariant()),
                 kisekae.Palettes.ToDictionary(x => x.FileName.ToLowerInvariant()));
@@ -95,7 +80,7 @@ public class DatabaseService
         foreach (var (config, colorIndex) in backgroundColors)
             config.BackgroundColorHex = kisekae.Palettes.First()?.Colors[colorIndex].Hex ?? Color.White.ToHex();
         foreach (var celConfig in kisekae.Configurations.SelectMany(config => config.Cels))
-            _fileParserService.RenderCel(celConfig);
+            fileParserService.RenderCel(celConfig);
 
         await context.AddAsync(kisekae);
         await context.SaveChangesAsync();
@@ -109,7 +94,7 @@ public class DatabaseService
             if (!reader.CanRead) throw new InvalidDataException();
 
             var bytes = new byte[reader.Length];
-            reader.Read(bytes, 0, bytes.Length);
+            reader.ReadExactly(bytes);
 
             switch (Path.GetExtension(filename).ToLower())
             {
@@ -142,7 +127,7 @@ public class DatabaseService
     {
         foreach (var palette in palettes)
         {
-            var colors = _fileParserService.ParsePalette(palette, out var groups, out var colorsPerGroup);
+            var colors = fileParserService.ParsePalette(palette, out var groups, out var colorsPerGroup);
 
             for (var groupIndex = 0; groupIndex < groups; groupIndex++)
             for (var colorIndex = 0; colorIndex < colorsPerGroup; colorIndex++)

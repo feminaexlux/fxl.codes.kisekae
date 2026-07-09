@@ -9,3 +9,4 @@
 *.Development.json
 *.Release.json
 .DS_Store
+*.lic

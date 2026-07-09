@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
-        <LangVersion>latestmajor</LangVersion>
+        <LangVersion>default</LangVersion>
+        <UserSecretsId>b2886b11-62f3-4354-b5c5-eaa9ea9678d3</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.8"/>
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.9"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="4.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -25,6 +26,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj" />
+        <ProjectReference Include="..\fxl.codes.kisekae.data\fxl.codes.kisekae.data.csproj"/>
     </ItemGroup>
 </Project>

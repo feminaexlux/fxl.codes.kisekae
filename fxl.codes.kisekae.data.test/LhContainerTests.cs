@@ -35,11 +35,12 @@ public class LhContainerTests
 
                 foreach (var file in files)
                 {
-                    Assert.That(file.FileName, Is.Not.Null, "Filename is {0}", file.FileName);
-                    Assert.That(file.CompressedSize, Is.GreaterThan(0), "Compressed size is {0}", file.CompressedSize);
-                    Assert.That(file.UncompressedSize, Is.GreaterThan(0), "Uncompressed size is {0}", file.UncompressedSize);
+                    Assert.IsNotNull(file.FileName, "Filename is {0}", file.FileName);
+                    Assert.Greater(file.CompressedSize, 0, "Compressed size is {0}", file.CompressedSize);
+                    Assert.Greater(file.CompressedSize, 0, "Compressed size is {0}", file.CompressedSize);
+                    Assert.Greater(file.UncompressedSize, 0, "Uncompressed size is {0}", file.UncompressedSize);
                     Assert.That(file.UncompressedSize, Is.GreaterThan(file.CompressedSize), "Uncompressed is larger than compressed");
-                    Assert.That(file.MethodId, Is.Not.Null, "Method id is {0}", file.MethodId);
+                    Assert.IsNotNull(file.MethodId, "Method id is {0}", file.MethodId);
                     Assert.That(file.MethodId, Does.StartWith("-l"));
                     Assert.That(file.MethodId, Does.EndWith("-"));
                     Console.WriteLine($"Archive name: {file.FileName}, compression method: {file.MethodId}, file at {file.FileDataPosition}");

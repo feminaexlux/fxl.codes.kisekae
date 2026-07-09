@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
 using System.Text;
+
+[assembly: InternalsVisibleTo("fxl.codes.kisekae.data.test")]
 
 namespace fxl.codes.kisekae.data.Archives;
 
@@ -13,10 +16,10 @@ internal class LhContainer
         var span = bytes.AsSpan();
         Level = span[20];
         MethodId = Encoding.ASCII.GetString(span[2..7]);
-        CompressedSize = EndianUtility.ToLittleEndian(span[7..11]);
+        CompressedSize = span[7..11].ToLittleEndian();
         CompressedFile = new byte[CompressedSize];
-        UncompressedSize = EndianUtility.ToLittleEndian(span[11..15]);
-        Created = EndianUtility.ToDateTime(span[15..19]);
+        UncompressedSize = span[11..15].ToLittleEndian();
+        Created = span[15..19].ToDateTime();
         FileOrDirectory = span[19];
 
         switch (Level)

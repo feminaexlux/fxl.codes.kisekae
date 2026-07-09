@@ -8,26 +8,19 @@ using Microsoft.Extensions.Logging;
 
 namespace fxl.codes.kisekae.Services;
 
-public class ConfigurationReaderService
+public class ConfigurationReaderService(ILogger<ConfigurationReaderService> logger)
 {
     private const string CelRegex = @"#(?<Mark>\d*)\.?(?<Fix>\d*)\s*(?<FileName>[\w\d\-]*\.[cCeElL]*)\s*\*?"
                                     + @"(?<PaletteIndex>\d*)?\s*\:?(?<Sets>[\d\s]*)?;?(?<Comment>[\w\d\-\s\%]*)";
 
     private const string ResolutionRegexPattern = @"\((?<Width>[0-9]*).(?<Height>[0-9]*)\)";
 
-    private readonly ILogger<ConfigurationReaderService> _logger;
-
-    public ConfigurationReaderService(ILogger<ConfigurationReaderService> logger)
-    {
-        _logger = logger;
-    }
-
     public void ReadConfiguration(Configuration dto,
                                   IDictionary<Configuration, int> backgroundColors,
                                   IDictionary<string, Cel> cels,
                                   Dictionary<string, Palette> palettes)
     {
-        _logger.LogInformation($"Reading {dto.Name}");
+        logger.LogInformation("Reading {Name}", dto.Name);
         var initialPositions = new StringBuilder();
         var backgroundColorIndex = 0;
         var paletteOrder = new List<Palette>();
