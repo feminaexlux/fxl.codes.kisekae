@@ -1,10 +1,9 @@
-namespace fxl.codes.kisekae.data.Entities
+namespace fxl.codes.kisekae.data.Entities;
+
+public class CelPosition
 {
-    public class CelPosition
-    {
-        public int Id { get; set; }
-        public int Set { get; set; }
-        public int X { get; set; }
-        public int Y { get; set; }
-    }
+    public int Id { get; set; }
+    public int Set { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
 }

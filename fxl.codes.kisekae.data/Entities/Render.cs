@@ -1,8 +1,7 @@
-namespace fxl.codes.kisekae.data.Entities
+namespace fxl.codes.kisekae.data.Entities;
+
+public class Render
 {
-    public class Render
-    {
-        public int Id { get; set; }
-        public byte[] Image { get; set; }
-    }
+    public int Id { get; set; }
+    public byte[] Image { get; set; }
 }
